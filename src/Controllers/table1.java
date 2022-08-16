@@ -8,6 +8,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.layout.Pane;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -19,11 +20,13 @@ public class table1 implements Initializable {
     public TableColumn col1;
     public TableColumn col2;
     public Button butt;
-
+    public Pane pane;
 
 
     @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) { }
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        System.out.println("it worked");
+    }
 
     public void buttpress(ActionEvent actionEvent) {
 
