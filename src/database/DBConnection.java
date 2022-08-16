@@ -1,8 +1,10 @@
 package database;
 
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import Password.password;
 
 
 
@@ -23,7 +25,7 @@ public class DBConnection {
     public static Connection startConnection() {
         try {
             Class.forName(MYSQLJBCDriver);
-            conn = DriverManager.getConnection(jdbcURL, username, Password.getPassword());
+            conn = DriverManager.getConnection(jdbcURL, username, password.getPassword());
 
             System.out.println("Connection successful");
         } catch (SQLException e) {
