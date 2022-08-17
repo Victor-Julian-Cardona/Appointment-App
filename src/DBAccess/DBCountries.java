@@ -35,6 +35,16 @@ public class DBCountries {
 
         System.out.println("Create date test");
         String sql = "select Create_Date FROM Countries";
+        try {
+            PreparedStatement ps = DBConnection.getConnection().prepareStatement(sql);
+            ResultSet rs = ps.executeQuery();
+            while(rs.next()) {
+                Timestamp ts = rs.getTimestamp("Create_Date");
+                System.out.println("CD" +ts.toLocalDateTime().toString());
+            }
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
 
     }
 

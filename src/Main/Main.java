@@ -1,5 +1,6 @@
 package Main;
 
+import DBAccess.DBCountries;
 import database.DBConnection;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -16,8 +17,8 @@ public class Main extends Application {
     @Override
     public void start(Stage stage) throws IOException {
 
-        Parent root = FXMLLoader.load(getClass().getResource("../view/practice.fxml"));
-        stage.setTitle("practice table");
+        Parent root = FXMLLoader.load(getClass().getResource("../view/login.fxml"));
+        stage.setTitle("Login Form");
         stage.setScene(new Scene(root));
         stage.show();
     }
