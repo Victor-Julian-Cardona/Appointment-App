@@ -34,7 +34,7 @@ public class login implements Initializable {
     /**
      * Declare and set locale language to be used by methods
      */
-    private String lang = Locale.getDefault().getDisplayName();
+    private final String lang = Locale.getDefault().getDisplayName();
 
     /** Initializes login screen
      * Sets time zone label to user time zone
@@ -109,6 +109,10 @@ public class login implements Initializable {
         }
     }
 
+    /**
+     * Method to close the stage for the program
+     * @param actionEvent
+     */
     public void exitPress(ActionEvent actionEvent) {
         Stage close = (Stage) ((Button)actionEvent.getSource()).getScene().getWindow();
         close.close();
