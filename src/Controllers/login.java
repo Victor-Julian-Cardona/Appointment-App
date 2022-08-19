@@ -3,10 +3,14 @@ package Controllers;
 import com.mysql.cj.x.protobuf.MysqlxPrepare;
 import database.DBConnection;
 import javafx.event.ActionEvent;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -81,7 +85,11 @@ public class login implements Initializable {
             String userPass = rs.getString("Password");
 
             if (passInput.equals(userPass)) {
-                System.out.println("Success");
+                Parent mainScreen = FXMLLoader.load(getClass().getResource(("../view/mainScreen.fxml")));
+                Scene scene = new Scene(mainScreen);
+                Stage window = (Stage) ((Button) actionEvent.getSource()).getScene().getWindow();
+                window.setScene(scene);
+                window.show();
             }
             else {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -95,7 +103,7 @@ public class login implements Initializable {
                 }
                 alert.showAndWait();
             }
-        } catch (SQLException e) {
+        } catch (SQLException | IOException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             if (lang.equals("français")) {
                 alert.setTitle("Nom d'utilisateur invalide");
