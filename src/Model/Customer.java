@@ -1,5 +1,6 @@
 package Model;
 
+import Util.CustomerList;
 import database.DBConnection;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -18,6 +19,7 @@ public class Customer {
     private static Timestamp lastUpdate;
     private static String updateBy;
     private static int divId;
+    private static String divName;
 
     /**
      * Constructor for Customer class
@@ -32,7 +34,7 @@ public class Customer {
      * @param updateBy
      * @param divId
      */
-    public Customer(int cusId, String name, String address, String postalCode, String phone, Date createDate, String createBy, Timestamp lastUpdate, String updateBy, int divId) {
+    public Customer(int cusId, String name, String address, String postalCode, String phone, Date createDate, String createBy, Timestamp lastUpdate, String updateBy, int divId, String divName) {
         this.cusId = cusId;
         this.name = name;
         this.address = address;
@@ -43,43 +45,24 @@ public class Customer {
         this.lastUpdate = lastUpdate;
         this.updateBy = updateBy;
         this.divId = divId;
+        this.divName = divName;
     }
 
     /**
-     * declare observable list of all customers currently in the database
+     * default constructor for Customer object
      */
-    private static ObservableList<Customer> customerList = FXCollections.observableArrayList();
-
-    /**
-     * Method to parse customer table and add all rows to an observable list
-     */
-    public static ObservableList getCurrentCustomers() {
-
-        String query = "SELECT * FROM customers";
-        Connection conn = DBConnection.getConnection();
-        PreparedStatement statement = null;
-        try {
-            statement = conn.prepareStatement(query);
-            ResultSet rs = statement.executeQuery();
-            while (rs.next()) {
-                int custID =rs.getInt("customer_id");
-                String name = rs.getString("customer_name");
-                String addresss = rs.getString("address");
-                String postalCode = rs.getString("Postal_code");
-                String phone  = rs.getString("phone");
-                Date createDate = rs.getDate("Create_Date");
-                String createBy = rs.getString("Created_By");
-                Timestamp lastUpdate = rs.getTimestamp("Last_Update");
-                String updateBy = rs.getString("Last_Updated_By");
-                int divId = rs.getInt("Division_ID");
-                Customer C = new Customer(custID, name, addresss, postalCode, phone, createDate, createBy, lastUpdate, updateBy, divId);
-                customerList.add(C);
-            }
-
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
-        }
-        return customerList;
+    public Customer() {
+        this.cusId = 0;
+        this.name = null;
+        this.address = null;
+        this.postalCode = null;
+        this.phone = null;
+        this.createDate = null;
+        this.createBy = null;
+        this.lastUpdate = null;
+        this.updateBy = null;
+        this.divId = 0;
+        this.divName = null;
     }
 
     /**
@@ -161,4 +144,13 @@ public class Customer {
     public static int getDivId() {
         return divId;
     }
+
+    /**
+     * Getter for divName
+     * @return
+     */
+    public static String getDivName() {return divName;}
+
 }
+
+

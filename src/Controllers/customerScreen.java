@@ -1,5 +1,6 @@
 package Controllers;
 
+import Util.CustomerList;
 import database.DBConnection;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -25,13 +26,16 @@ public class customerScreen implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
-        cusTable.setItems(Customer.getCurrentCustomers());
+        CustomerList clist = new CustomerList();
+        clist.updateCustomers();
+
+        cusTable.setItems(clist.getCustomerList());
 
         idCol.setCellValueFactory(new PropertyValueFactory<>("cusId"));
         nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
         adressCol.setCellValueFactory(new PropertyValueFactory<>("address"));
         codeCol.setCellValueFactory(new PropertyValueFactory<>("postalCode"));
         phoneCol.setCellValueFactory(new PropertyValueFactory<>("phone"));
-        stateCol.setCellValueFactory(new PropertyValueFactory<>("divId"));
+        stateCol.setCellValueFactory(new PropertyValueFactory<>("divName"));
     }
 }
