@@ -9,6 +9,9 @@ import java.sql.*;
 
 public class CustomerList {
 
+    /**
+     * List to be presented in Customer screen table
+     */
     private static ObservableList<Customer> customerList = FXCollections.observableArrayList();
 
     /**
@@ -22,39 +25,34 @@ public class CustomerList {
         try {
             PreparedStatement statement = conn.prepareStatement(query);
             ResultSet rs = statement.executeQuery();
-            int i = 0;
 
             while (rs.next()) {
 
                 int custID = rs.getInt("customer_id");
                 String name = rs.getString("customer_name");
-                String addresss = rs.getString("address");
+                String address = rs.getString("address");
                 String postalCode = rs.getString("Postal_code");
-                String phone  = rs.getString("phone");
-                Date createDate = rs.getDate("Create_Date");
+                String phone = rs.getString("phone");
+                Timestamp createDate = rs.getTimestamp("Create_Date");
                 String createBy = rs.getString("Created_By");
                 Timestamp lastUpdate = rs.getTimestamp("Last_Update");
                 String updateBy = rs.getString("Last_Updated_By");
                 int divId = rs.getInt("Division_ID");
                 String divName = getDivName(divId);
 
-                Customer C  = new Customer(custID, name, addresss, postalCode, phone, createDate, createBy, lastUpdate, updateBy, divId, divName);
-                //System.out.println(C.getPhone());
-                customerList.add(i, C);
-                i++;
-
-                System.out.println("boom");
-                for (int j = 0; j < customerList.size(); j++) {
-                    System.out.println(customerList.get(j).getPhone());
-                }
-
-                System.out.println(i);
+                Customer C = new Customer(custID, name, address, postalCode, phone, createDate, createBy, lastUpdate, updateBy, divId, divName);
+                customerList.add(C);
             }
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
     }
 
+    /**
+     * Method that receives division id of a Customer object and returns the divisions name
+     * @param divId
+     * @return division name
+     */
     public static String getDivName(int divId) {
 
         Connection conn = DBConnection.getConnection();
@@ -72,20 +70,20 @@ public class CustomerList {
         return stateName;
     }
 
+    /**
+     * getter for observable Customer list
+     * @return
+     */
     public static ObservableList<Customer> getCustomerList() {
         return customerList;
     }
-    public static void addCustomer(Customer C) {
-        customerList.add(C);
-    }
+
+    /**
+     * method to clear observable customer list
+     */
     public static void clearCustomerList() {
         customerList.clear();
     }
-    public static void printList() {
-        System.out.println("boom");
-        for (int i = 0; i <3; i++) {
-            System.out.println(customerList.get(i).getPhone());
-        }
-    }
+
 }
 

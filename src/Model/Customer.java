@@ -9,17 +9,17 @@ import java.sql.*;
 
 public class Customer {
 
-    private static int cusId;
-    private static String name;
-    private static String address;
-    private static String postalCode;
-    private static String phone;
-    private static Date createDate;
-    private static String createBy;
-    private static Timestamp lastUpdate;
-    private static String updateBy;
-    private static int divId;
-    private static String divName;
+    private final int cusId;
+    private final String name;
+    private final String address;
+    private final String postalCode;
+    private final String phone;
+    private final Timestamp createDate;
+    private final String createBy;
+    private final Timestamp lastUpdate;
+    private final String updateBy;
+    private final int divId;
+    private final String divName;
 
     /**
      * Constructor for Customer class
@@ -34,7 +34,7 @@ public class Customer {
      * @param updateBy
      * @param divId
      */
-    public Customer(int cusId, String name, String address, String postalCode, String phone, Date createDate, String createBy, Timestamp lastUpdate, String updateBy, int divId, String divName) {
+    public Customer(int cusId, String name, String address, String postalCode, String phone, Timestamp createDate, String createBy, Timestamp lastUpdate, String updateBy, int divId, String divName) {
         this.cusId = cusId;
         this.name = name;
         this.address = address;
@@ -69,7 +69,7 @@ public class Customer {
      * getter for customer id
      * @return customer id
      */
-    public static int getCusId() {
+    public int getCusId() {
         return cusId;
     }
 
@@ -77,7 +77,7 @@ public class Customer {
      * setter for customer name
      * @return customer name
      */
-    public static String getName() {
+    public  String getName() {
         return name;
     }
 
@@ -85,7 +85,7 @@ public class Customer {
      * Getter for customer address
      * @return customer address
      */
-    public static String getAddress() {
+    public String getAddress() {
         return address;
     }
 
@@ -93,7 +93,7 @@ public class Customer {
      * Getter for customer postal code
      * @return postal code
      */
-    public static String getPostalCode() {
+    public String getPostalCode() {
         return postalCode;
     }
 
@@ -101,7 +101,7 @@ public class Customer {
      * Getter for customer phone
      * @return phone
      */
-    public static String getPhone() {
+    public String getPhone() {
         return phone;
     }
 
@@ -109,7 +109,7 @@ public class Customer {
      * Getter for date the customer was created
      * @return createDate
      */
-    public static Date getCreateDate() {
+    public Timestamp getCreateDate() {
         return createDate;
     }
 
@@ -117,7 +117,7 @@ public class Customer {
      * Getter for user that created the customer
      * @return createBy
      */
-    public static String getCreateBy() {
+    public String getCreateBy() {
         return createBy;
     }
 
@@ -125,7 +125,7 @@ public class Customer {
      * Getter for time the customer was updated
      * @return lastUpdate
      */
-    public static Timestamp getLastUpdate() {
+    public Timestamp getLastUpdate() {
         return lastUpdate;
     }
 
@@ -133,7 +133,7 @@ public class Customer {
      * Getter for the last time the customer was updated
      * @return updateBY
      */
-    public static String getUpdateBy() {
+    public String getUpdateBy() {
         return updateBy;
     }
 
@@ -141,7 +141,7 @@ public class Customer {
      * Getter for the division Id of the customer
      * @return divID
      */
-    public static int getDivId() {
+    public int getDivId() {
         return divId;
     }
 
@@ -149,7 +149,7 @@ public class Customer {
      * Getter for divName
      * @return
      */
-    public static String getDivName() {return divName;}
+    public String getDivName() {return divName;}
 
 }
 
