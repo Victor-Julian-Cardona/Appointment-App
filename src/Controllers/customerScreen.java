@@ -43,6 +43,16 @@ public class customerScreen implements Initializable {
     private CustomerList clist = new CustomerList();
 
     /**
+     * Declare list of countries for comboBox
+     */
+    private ObservableList<String> countryList = FXCollections.observableArrayList();
+
+    /**
+     * Declare list of states for comboBox
+     */
+    private ObservableList<String> stateList = FXCollections.observableArrayList();
+
+    /**
      * Declare countrySelection string, to be used throughout the customerScreen class
      */
     private String countrySelection;
@@ -63,10 +73,15 @@ public class customerScreen implements Initializable {
     private int stateIdSelection;
 
     /**
+     * Declare booleans to check if comboBoxes should update
+     */
+    private boolean countryListen = true, stateListen = true;
+
+    /**
      * Method to populate country combo box
      */
     public void setCountryCombo() {
-        ObservableList<String> countryList = FXCollections.observableArrayList();
+
         Connection conn = DBConnection.getConnection();
         String query = "SELECT country FROM COUNTRIES";
 
@@ -89,7 +104,6 @@ public class customerScreen implements Initializable {
      */
     public void setStateCombo() {
 
-        ObservableList<String> stateList = FXCollections.observableArrayList();
         Connection conn = DBConnection.getConnection();
         String query = "SELECT Division FROM First_level_divisions where country_id = " + countryIdSelection;
 
@@ -205,12 +219,49 @@ public class customerScreen implements Initializable {
             postalField.clear();
             addressField.clear();
             idfield.clear();
-            stateBox.valueProperty().set(null);
-            countryBox.valueProperty().set(null);
+
+            clearComboBoxes();
         }
     }
 
+    public void clearComboBoxes() {
+        countryListen = false;
+        stateListen = false;
+        stateBox.getSelectionModel().clearSelection();
+        stateBox.setItems(null);
+        countryBox.getSelectionModel().clearSelection();
+        countryBox.setItems(null);
+        countryListen = true;
+        stateListen = true;
+        setCountryCombo();
+    }
+
     public void upPress(ActionEvent actionEvent) {
+
+        try {
+            Customer selected = (Customer) cusTable.getSelectionModel().getSelectedItem();
+
+            //populate fields
+            idfield.setText(String.valueOf(selected.getCusId()));
+            nameField.setText(selected.getName());
+            addressField.setText(selected.getAddress());
+            postalField.setText(selected.getPostalCode());
+            phoneFIeld.setText(selected.getPhone());
+
+            //populate comboboxes FIX THIS
+             for (int i = 0; i< countryList.size(); i++) {
+                 if (selected.getDivName() == countryList.get(i)) {
+                     stateBox.getSelectionModel().select(i);
+                 }
+             }
+
+        } catch (NullPointerException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("No selection");
+            alert.setContentText("Please select Customer to delete.");
+            alert.showAndWait();
+        }
+
     }
 
     public void savePress(ActionEvent actionEvent) {
@@ -224,21 +275,24 @@ public class customerScreen implements Initializable {
      * @param actionEvent
      */
     public void countryCombo(ActionEvent actionEvent) {
-      countrySelection = String.valueOf(countryBox.getValue());
 
-        Connection conn = DBConnection.getConnection();
-        String query = "SELECT Country_id FROM countries WHERE country = '" + countrySelection + "'";
+        if(countryListen) {
+            countrySelection = String.valueOf(countryBox.getValue());
 
-        try {
-            PreparedStatement statement = conn.prepareStatement(query);
-            ResultSet rs = statement.executeQuery();
-            rs.next();
-            countryIdSelection = rs.getInt("Country_Id");
+            Connection conn = DBConnection.getConnection();
+            String query = "SELECT Country_id FROM countries WHERE country = '" + countrySelection + "'";
 
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
+            try {
+                PreparedStatement statement = conn.prepareStatement(query);
+                ResultSet rs = statement.executeQuery();
+                rs.next();
+                countryIdSelection = rs.getInt("Country_Id");
+
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+            setStateCombo();
         }
-        setStateCombo();
     }
 
     /**
@@ -246,19 +300,21 @@ public class customerScreen implements Initializable {
      * @param actionEvent
      */
     public void stateCombo(ActionEvent actionEvent) {
-        stateSelection = String.valueOf(stateBox.getValue());
 
-        Connection conn = DBConnection.getConnection();
-        String query  = "SELECT Division_id FROM first_level_divisions WHERE division = '" + stateSelection + "'";
+        if(stateListen) {
+            stateSelection = String.valueOf(stateBox.getValue());
 
-        try {
-            PreparedStatement statement = conn.prepareStatement(query);
-            ResultSet rs = statement.executeQuery();
-            rs.next();
-            stateIdSelection = rs.getInt("Division_Id");
+            Connection conn = DBConnection.getConnection();
+            String query = "SELECT Division_id FROM first_level_divisions WHERE division = '" + stateSelection + "'";
 
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
+            try {
+                PreparedStatement statement = conn.prepareStatement(query);
+                ResultSet rs = statement.executeQuery();
+                rs.next();
+                stateIdSelection = rs.getInt("Division_Id");
+
+            } catch (SQLException throwables) {
+            }
         }
     }
 
@@ -273,27 +329,31 @@ public class customerScreen implements Initializable {
             Customer selected = (Customer) cusTable.getSelectionModel().getSelectedItem();
             int idDel = selected.getCusId();
 
-            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-            confirm.setTitle("Delete Confirmation");
-            confirm.setContentText("Are you sure you want to delete this customer?");
-            Optional<ButtonType> option = confirm.showAndWait();
+            Connection conn = DBConnection.getConnection();
+            String query1 = "Delete from appointments WHERE customer_id = " + idDel;
+            String query2 = "Delete from customers WHERE customer_id = " + idDel;
 
-            if (option.get() == ButtonType.OK) {
-                Connection conn = DBConnection.getConnection();
-                String query = "Delete from customers WHERE customer_id = " + idDel;
-
-                try {
-                    PreparedStatement statement = conn.prepareStatement(query);
-                    statement.executeUpdate();
-
-                } catch (SQLException throwables) {
-                    throwables.printStackTrace();
-                }
+            try {
+                PreparedStatement statement = conn.prepareStatement(query1);
+                statement.executeUpdate();
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+            try {
+                PreparedStatement statement = conn.prepareStatement(query2);
+                statement.executeUpdate();
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
             }
 
             cusTable.getItems().clear();
             clist.updateCustomers();
             cusTable.setItems(clist.getCustomerList());
+
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Success!");
+            alert.setContentText("Customer has been deleted from database");
+            alert.showAndWait();
 
         } catch (NullPointerException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
