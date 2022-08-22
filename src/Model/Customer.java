@@ -1,10 +1,5 @@
 package Model;
 
-import Util.CustomerList;
-import database.DBConnection;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-
 import java.sql.*;
 
 public class Customer {

@@ -1,4 +1,4 @@
-package Util;
+package Utility;
 
 import Model.Customer;
 import database.DBConnection;
@@ -77,13 +77,5 @@ public class CustomerList {
     public static ObservableList<Customer> getCustomerList() {
         return customerList;
     }
-
-    /**
-     * method to clear observable customer list
-     */
-    public static void clearCustomerList() {
-        customerList.clear();
-    }
-
 }
 

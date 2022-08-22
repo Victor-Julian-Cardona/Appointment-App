@@ -35,6 +35,11 @@ public class mainScreen implements Initializable {
         close.close();
     }
 
-    public void appPress(ActionEvent actionEvent) {
+    public void appPress(ActionEvent actionEvent) throws IOException {
+        Parent mainScreen = FXMLLoader.load(getClass().getResource(("../view/AppointmentScreen.fxml")));
+        Scene scene = new Scene(mainScreen);
+        Stage window = (Stage) ((Button) actionEvent.getSource()).getScene().getWindow();
+        window.setScene(scene);
+        window.show();
     }
 }

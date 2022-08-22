@@ -1,8 +1,7 @@
 package Controllers;
 
-import Util.CustomerList;
-import Util.Function;
-import Util.idSwap;
+import Utility.CustomerList;
+import Utility.Function;
 import database.DBConnection;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -20,8 +19,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.function.Supplier;
 
 public class customerScreen implements Initializable {
     public TableView cusTable;
@@ -160,6 +159,7 @@ public class customerScreen implements Initializable {
      * repopulates table
      * @param actionEvent
      */
+
     public void addPress(ActionEvent actionEvent) {
 
         if(idfield.getText().isEmpty()) {

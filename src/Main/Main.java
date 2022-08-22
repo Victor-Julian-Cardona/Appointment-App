@@ -1,6 +1,6 @@
 package Main;
 
-import DBAccess.DBCountries;
+
 import database.DBConnection;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -26,8 +26,9 @@ public class Main extends Application {
     @Override
     public void start(Stage stage) throws IOException {
 
-        Parent root = FXMLLoader.load(getClass().getResource("../view/customerScreen.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("../view/AppointmentScreen.fxml"));
         stage.setScene(new Scene(root));
+        stage.setTitle("Appointment Management Program");
         stage.show();
     }
 
