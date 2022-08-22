@@ -15,6 +15,7 @@ import java.util.ResourceBundle;
 public class mainScreen implements Initializable {
     public Button custButton;
     public Button exitButton;
+    public Button appButton;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -32,5 +33,8 @@ public class mainScreen implements Initializable {
     public void exitPress(ActionEvent actionEvent) {
         Stage close = (Stage) ((Button)actionEvent.getSource()).getScene().getWindow();
         close.close();
+    }
+
+    public void appPress(ActionEvent actionEvent) {
     }
 }

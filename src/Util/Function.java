@@ -10,7 +10,7 @@ import java.sql.SQLException;
 
 public abstract class Function {
 
-    public static int getCustomerId(String userName) throws SQLException {
+    public static int getUserId(String userName) throws SQLException {
         String query = "SELECT User_ID FROM USERS WHERE User_Name = '" + userName + "'";
         Connection conn = DBConnection.getConnection();
         PreparedStatement statement = conn.prepareStatement(query);
@@ -20,7 +20,7 @@ public abstract class Function {
         return userId;
     }
 
-    public static String getCustomerName(int userID) throws SQLException {
+    public static String getUserName(int userID) throws SQLException {
         String query = "SELECT User_ID FROM USERS WHERE User_Id = '" + userID + "'";
         Connection conn = DBConnection.getConnection();
         PreparedStatement statement = conn.prepareStatement(query);
@@ -30,11 +30,20 @@ public abstract class Function {
         return userName;
     }
 
-    public interface idNameSwap {
-        int swap(String name);
-    }
+    public static String getCountry(int divId) throws SQLException {
+        Connection conn = DBConnection.getConnection();
+        String query = "SELECT Country_id FROM first_level_divisions WHERE division_id = " + divId;
 
-    public interface nameIdSwap {
-        String swap(int id);
+        PreparedStatement statement = conn.prepareStatement(query);
+        ResultSet rs = statement.executeQuery();
+        rs.next();
+        int countryId = rs.getInt("country_id");
+
+        String query2 = "SELECT country FROM Countries WHERE country_id = "+ countryId;
+        PreparedStatement statement2 = conn.prepareStatement(query2);
+        ResultSet rs2 = statement2.executeQuery();
+        rs2.next();
+        String country = rs2.getString("country");
+        return country;
     }
 }
