@@ -77,5 +77,13 @@ public class CustomerList {
     public static ObservableList<Customer> getCustomerList() {
         return customerList;
     }
+
+    /**
+     * method to clear observable customer list
+     */
+    public static void clearCustomerList() {
+        customerList.clear();
+    }
+
 }
 

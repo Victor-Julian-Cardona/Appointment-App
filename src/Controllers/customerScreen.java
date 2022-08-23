@@ -89,6 +89,16 @@ public class customerScreen implements Initializable {
     private boolean updatingStatus = false;
 
     /**
+     * Lambda supplier expression to get user name from login screen
+     */
+    Supplier<String> getUser = () -> login.user;
+
+    /**
+     * Lambda supplier expression to get current date andtime
+     */
+    Supplier<Timestamp> getTime = () -> Timestamp.valueOf(LocalDateTime.now());
+
+    /**
      * Method to populate country combo box
      */
     public void setCountryCombo() {
@@ -140,6 +150,8 @@ public class customerScreen implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+
+        clist.clearCustomerList();
         clist.updateCustomers();
         cusTable.setItems(clist.getCustomerList());
 
@@ -177,6 +189,8 @@ public class customerScreen implements Initializable {
 
             //Error message if user does not populate all fields
             if (nameField.getText().isEmpty() || addressField.getText().isEmpty() || postalField.getText().isEmpty() || phoneFIeld.getText().isEmpty()) {
+
+                idfield.clear();
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Insufficient information");
                 alert.setContentText("Please fill all information boxes");
@@ -190,10 +204,10 @@ public class customerScreen implements Initializable {
             String addressInput = addressField.getText();
             String postalInput = postalField.getText();
             String phoneInput = phoneFIeld.getText();
-            Timestamp todayTime = Timestamp.valueOf(LocalDateTime.now());
-            String createBy = "admin";
-            Timestamp updateTime = Timestamp.valueOf(LocalDateTime.now());
-            String updateBy = "admin";
+            Timestamp todayTime = getTime.get();
+            String createBy = getUser.get();
+            Timestamp updateTime = getTime.get();
+            String updateBy = getUser.get();
 
             //Insert data into table
             Connection conn = DBConnection.getConnection();
@@ -331,8 +345,8 @@ public class customerScreen implements Initializable {
             String addressInput = addressField.getText();
             String postalInput = postalField.getText();
             String phoneInput = phoneFIeld.getText();
-            Timestamp updateTime = Timestamp.valueOf(LocalDateTime.now());
-            String updateBy = "admin";
+            Timestamp updateTime = getTime.get();
+            String updateBy = getUser.get();
 
             //Insert data into table
             Connection conn = DBConnection.getConnection();

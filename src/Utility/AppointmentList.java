@@ -54,8 +54,8 @@ public class AppointmentList {
     }
 
     /**
-     * Getter for list of all appointments
-     * @return appointment list
+     * Method to get appointment list
+     * @return
      */
     public static ObservableList<Appointment> getAppointmentList() {
         return aList;

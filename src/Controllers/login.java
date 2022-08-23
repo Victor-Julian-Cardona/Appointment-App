@@ -40,6 +40,11 @@ public class login implements Initializable {
      */
     private final String lang = Locale.getDefault().getDisplayName();
 
+    /**
+     * Declare user String to be supplied my Lambda expressions in Controllers
+     */
+    public static String user = "tester";
+
     /** Initializes login screen
      * Sets time zone label to user time zone
      * Changes all text in log in form to french if locale language is french
@@ -90,6 +95,7 @@ public class login implements Initializable {
                 Stage window = (Stage) ((Button) actionEvent.getSource()).getScene().getWindow();
                 window.setScene(scene);
                 window.show();
+                user = userName;
             }
             else {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
