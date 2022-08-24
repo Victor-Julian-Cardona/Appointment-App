@@ -2,10 +2,8 @@ package Utility;
 
 import database.DBConnection;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.time.LocalDateTime;
 
 public abstract class Function {
 
@@ -19,14 +17,14 @@ public abstract class Function {
         return userId;
     }
 
-    public static String getUserName(int userID) throws SQLException {
-        String query = "SELECT User_ID FROM USERS WHERE User_Id = '" + userID + "'";
+    public static int getContactId(String contact) throws SQLException {
+        String query = "SELECT contact_id FROM contacts WHERE Contact_Name = '" + contact + "'";
         Connection conn = DBConnection.getConnection();
         PreparedStatement statement = conn.prepareStatement(query);
         ResultSet rs = statement.executeQuery();
         rs.next();
-        String userName = rs.getString("USER_Name");
-        return userName;
+        int contactId = rs.getInt("contact_id");
+        return contactId;
     }
 
     public static String getCountry(int divId) throws SQLException {

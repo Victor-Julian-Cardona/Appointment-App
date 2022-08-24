@@ -1,7 +1,6 @@
 package Utility;
 
 import Model.Appointment;
-
 import database.DBConnection;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -60,5 +59,10 @@ public class AppointmentList {
     public static ObservableList<Appointment> getAppointmentList() {
         return aList;
     }
+
+    /**
+     * Method to clear appointment list
+     */
+    public static void clearAppointmentList() {aList.clear();}
 
 }

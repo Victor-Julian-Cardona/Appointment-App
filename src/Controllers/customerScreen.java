@@ -185,12 +185,10 @@ public class customerScreen implements Initializable {
                     max++;
                 }
             }
-            idfield.setText(String.valueOf(max));
 
             //Error message if user does not populate all fields
             if (nameField.getText().isEmpty() || addressField.getText().isEmpty() || postalField.getText().isEmpty() || phoneFIeld.getText().isEmpty()) {
 
-                idfield.clear();
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Insufficient information");
                 alert.setContentText("Please fill all information boxes");
