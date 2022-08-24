@@ -7,10 +7,15 @@ import database.DBConnection;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
 import java.time.LocalDate;
@@ -174,6 +179,7 @@ public class AppointmentScreen implements Initializable {
      * Method to clear all fields in the form
      */
     public void clearFields() {
+        //clear fields
         titleField.clear();
         descField.clear();
         locField.clear();
@@ -182,13 +188,15 @@ public class AppointmentScreen implements Initializable {
         customerBox.getSelectionModel().clearSelection();
         contactBox.getSelectionModel().clearSelection();
 
-        if (boxListening) {
-            dateBox.setValue(null);
-            startHourBox.getSelectionModel().clearSelection();
-            startMinBox.getSelectionModel().clearSelection();
-            endHourBox.getSelectionModel().clearSelection();
-            endMinBox.getSelectionModel().clearSelection();
-        }
+        //clear boxes
+        boxListening = false;
+        dateBox.setValue(null);
+        startHourBox.getSelectionModel().clearSelection();
+        startMinBox.getSelectionModel().clearSelection();
+        endHourBox.getSelectionModel().clearSelection();
+        endMinBox.getSelectionModel().clearSelection();
+        boxListening  = true;
+
     }
 
     /**
@@ -355,62 +363,195 @@ public class AppointmentScreen implements Initializable {
         }
     }
 
+    /**
+     * gives functionality to update appointment button
+     * populates all fields with appointment information
+     * @param actionEvent
+     */
     public void upPress(ActionEvent actionEvent) {
-        try {
-            Appointment selected = (Appointment) appointmentsTable.getSelectionModel().getSelectedItem();
-
-            //populate fields
-            titleField.setText(String.valueOf(selected.getTitle()));
-            descField.setText(selected.getDesc());
-            locField.setText(selected.getLocat());
-            typeField.setText(selected.getType());
-            appIdField.setText(String.valueOf(selected.getAppId()));
-
-            //set Calendar selection
+        if(appIdField.getText().isEmpty()) {
             try {
+                Appointment selected = (Appointment) appointmentsTable.getSelectionModel().getSelectedItem();
+
+                //populate fields
+                titleField.setText(String.valueOf(selected.getTitle()));
+                descField.setText(selected.getDesc());
+                locField.setText(selected.getLocat());
+                typeField.setText(selected.getType());
+                appIdField.setText(String.valueOf(selected.getAppId()));
+
+                boxListening = false;
+
+                //set Calendar selection
                 LocalDate date = selected.getStart().toLocalDateTime().toLocalDate();
                 dateBox.setValue(date);
-            } catch (NullPointerException e) {
+
+                //set start and end ComboBoxes
+                //start hour
+                long startHours = selected.getStart().getTime();
+                long totalHours = TimeUnit.MILLISECONDS.toHours(startHours);
+                String hours = String.valueOf(totalHours % 24);
+                for (int i = 0; i < getHourList().size(); i++) {
+                    if (hours.equals(getHourList().get(i))) {
+                        startHourBox.getSelectionModel().select(i);
+                    }
+                }
+
+                //start min
+                long startMinutes = selected.getStart().getTime();
+                long totalMinutes = TimeUnit.MILLISECONDS.toMinutes(startMinutes);
+                String minutes = String.valueOf(totalMinutes % 60);
+                for (int i = 0; i < getMinuteList().size(); i++) {
+                    if (minutes.equals(getMinuteList().get(i))) {
+                        startMinBox.getSelectionModel().select(i);
+                    }
+                }
+
+                //end hour
+                long endHours = selected.getEnd().getTime();
+                long totalEndHours = TimeUnit.MILLISECONDS.toHours(endHours);
+                String hours2 = String.valueOf(totalEndHours % 24);
+                for (int i = 0; i < getHourList().size(); i++) {
+                    if (hours2.equals(getHourList().get(i))) {
+                        endHourBox.getSelectionModel().select(i);
+                    }
+                }
+
+                //end min
+                long endMinutes = selected.getEnd().getTime();
+                long totalEndMinutes = TimeUnit.MILLISECONDS.toMinutes(endMinutes);
+                String minutes2 = String.valueOf(totalEndMinutes % 60);
+                for (int i = 0; i < getMinuteList().size(); i++) {
+                    if (minutes2.equals(getMinuteList().get(i))) {
+                        endMinBox.getSelectionModel().select(i);
+                    }
+                }
+
+                // set customer and contact comboBoxes
+                int selectedCustomerId = selected.getCustId();
+                customerBox.getSelectionModel().select(Converters.getCustomer(selectedCustomerId));
+                int selectedContactId = selected.getContId();
+                contactBox.getSelectionModel().select(Converters.getContact(selectedContactId));
+
+                boxListening = true;
+
+            } catch (NullPointerException | SQLException e) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("No selection");
+                alert.setContentText("Please select Customer to update.");
+                alert.showAndWait();
             }
-
-            //set start and end ComboBoxes
-
-            //start hour
-            long startHours = selected.getStart().getTime();
-            long totalHours = TimeUnit.MILLISECONDS.toHours(startHours);
-            int hours = (int) totalHours%24;
-            startMinBox.getSelectionModel().select(hours);
-
-            //start min
-            long startMinutes = selected.getStart().getTime();
-            long totalMinutes = TimeUnit.MILLISECONDS.toMinutes(startMinutes);
-            int minutes = (int) totalMinutes%60;
-            startMinBox.getSelectionModel().select(minutes);
-
-            //end hour
-            long endHours = selected.getEnd().getTime();
-            long totalEndHours = TimeUnit.MILLISECONDS.toHours(startHours);
-            int hours2 = (int) totalEndHours%24;
-            startMinBox.getSelectionModel().select(hours2);
-
-            //start min
-            long endMinutes = selected.getStart().getTime();
-            long totalEndMinutes = TimeUnit.MILLISECONDS.toMinutes(endMinutes);
-            int minutes2 = (int) totalEndMinutes%60;
-            startMinBox.getSelectionModel().select(minutes2);
-
-        } catch (NullPointerException e) {
+        }
+        else {
             Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("No selection");
-            alert.setContentText("Please select Customer to update.");
+            alert.setTitle("Currently updating");
+            alert.setContentText("Please save or cancel currently updating appointment");
             alert.showAndWait();
         }
     }
 
     public void savePress(ActionEvent actionEvent) {
+        // declare boolean that indicates successful addition to database
+        boolean updated = true;
+
+        //Error message if user does not populate all fields
+        if (titleField.getText().isEmpty() || descField.getText().isEmpty() || locField.getText().isEmpty() || typeField.getText().isEmpty()) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Insufficient information");
+            alert.setContentText("Please fill all information boxes");
+            alert.showAndWait();
+            updated = false;
+            return;
+        }
+
+        //error message if user does not select date
+        if (dateBox.getAccessibleText() == null) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Insufficient information");
+            alert.setContentText("Please select date");
+            alert.showAndWait();
+            updated = false;
+            return;
+        }
+
+        //parse data entered by fields
+        int appId = Integer.parseInt(appIdField.getText());
+        String titleInput = titleField.getText();
+        String descInput = descField.getText();
+        String locationInput = locField.getText();
+        String typeInput = typeField.getText();
+
+        //get current user and current time using lambdas
+        Timestamp todayTime = getTime.get();
+        String createBy = getUser.get();
+
+        //get selected date
+        setDateTime();
+
+        //get user
+        int userId = Integer.parseInt(userIdField.getText());
+
+        //set connection and sql statement
+        Connection conn = DBConnection.getConnection();
+        String query = "UPDATE Appointments SET title = ?, description = ?, location = ?, type = ?, start = ?, end = ?, create_date = ?, created_by = ?, last_update = ?, last_updated_by = ?, customer_id = ?, user_id = ?, contact_id = ? WHERE appointment_id = " + appId;
+
+        try {
+            //Parse contact and customer id comboBoxes
+            int custId = Converters.getCustomerId(String.valueOf(customerBox.getValue()));
+            int contactId = Converters.getContactId(String.valueOf(contactBox.getValue()));
+
+            //get selected date
+            setDateTime();
+
+            //Populate sql statement
+            PreparedStatement statement = conn.prepareStatement(query);
+            statement.setString(1, titleInput);
+            statement.setString(2, descInput);
+            statement.setString(3, locationInput);
+            statement.setString(4, typeInput);
+            statement.setTimestamp(5, Timestamp.valueOf(startDateTime));
+            statement.setTimestamp(6, Timestamp.valueOf(endDateTime));
+            statement.setTimestamp(7, todayTime);
+            statement.setString(8, createBy);
+            statement.setTimestamp(9, todayTime);
+            statement.setString(10, createBy);
+            statement.setInt(11, custId);
+            statement.setInt(12, userId);
+            statement.setInt(13, contactId);
+
+            //execute sql statement
+            statement.executeUpdate();
+
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        catch (NullPointerException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Insufficient Information");
+            alert.setContentText("Please select appointment date, start time and end time");
+            alert.showAndWait();
+            updated = false;
+        }
+
+        if (updated) {
+            //Update table with new values
+            aList.clearAppointmentList();
+            aList.updateAppointments();
+            appointmentsTable.setItems(aList.getAppointmentList());
+
+            //clear fields
+            clearFields();
+        }
     }
 
+    /**
+     * Adds functionality to cancel button
+     * clears fields and cancels updating customer
+     * @param actionEvent
+     */
     public void cancelPress(ActionEvent actionEvent) {
+        clearFields();
     }
 
     /**
@@ -450,10 +591,27 @@ public class AppointmentScreen implements Initializable {
         }
     }
 
+    /**
+     * gives functionality to clear button
+     * clears allfields
+     * @param actionEvent
+     */
     public void clearPress(ActionEvent actionEvent) {
+        clearFields();
     }
 
-    public void backPress(ActionEvent actionEvent) {
+    /**
+     * Adds functionality to back button
+     * returns customer to main screen
+     * @param actionEvent
+     * @throws IOException
+     */
+    public void backPress(ActionEvent actionEvent) throws IOException {
+        Parent mainScreen = FXMLLoader.load(getClass().getResource(("../view/mainScreen.fxml")));
+        Scene scene = new Scene(mainScreen);
+        Stage window = (Stage) ((Button) actionEvent.getSource()).getScene().getWindow();
+        window.setScene(scene);
+        window.show();
     }
 
     /**

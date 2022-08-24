@@ -53,4 +53,24 @@ public abstract class Converters {
         int customerId = rs.getInt("customer_id");
         return customerId;
     }
+
+    public static String getCustomer(int customerId) throws SQLException {
+        String query = "SELECT customer_name FROM customers WHERE customer_id = "+customerId;
+        Connection conn = DBConnection.getConnection();
+        PreparedStatement statement = conn.prepareStatement(query);
+        ResultSet rs = statement.executeQuery();
+        rs.next();
+        String customer = rs.getString("customer_name");
+        return customer;
+    }
+
+    public static String getContact(int contactId) throws SQLException {
+        String query = "SELECT contact_name FROM contacts WHERE contact_id = "+contactId;
+        Connection conn = DBConnection.getConnection();
+        PreparedStatement statement = conn.prepareStatement(query);
+        ResultSet rs = statement.executeQuery();
+        rs.next();
+        String contact = rs.getString("contact_name");
+        return contact;
+    }
 }
