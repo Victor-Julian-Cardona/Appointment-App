@@ -2,24 +2,22 @@ package Controllers;
 
 import Model.Appointment;
 import Utility.AppointmentList;
-import Utility.Function;
+import Utility.Converters;
 import database.DBConnection;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableIntegerArray;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.MouseEvent;
 
 import java.net.URL;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class AppointmentScreen implements Initializable {
@@ -65,6 +63,11 @@ public class AppointmentScreen implements Initializable {
     private LocalDateTime startDateTime, endDateTime;
 
     /**
+     * Declare boolean to check if callendar and comboBoxes are listening
+     */
+    private boolean boxListening = true;
+
+    /**
      * Declare object aList of the AppointmentList class to be used in the AppointmentScreen controller
      */
     private AppointmentList aList = new AppointmentList();
@@ -72,7 +75,7 @@ public class AppointmentScreen implements Initializable {
     /**
      * Declare observable list of all customerIds
      */
-    private ObservableList<String> customerIdList = FXCollections.observableArrayList();
+    private ObservableList<String> customerList = FXCollections.observableArrayList();
 
     /**
      * Declare observable list of all contacts
@@ -114,14 +117,14 @@ public class AppointmentScreen implements Initializable {
     /**
      * Method to populate list of available customer ids
      */
-    public void setCustomerIdList() throws SQLException {
-        String query = "SELECT Customer_ID FROM customers ORDER BY customer_id";
+    public void setCustomerList() throws SQLException {
+        String query = "SELECT Customer_name FROM customers ORDER BY customer_name";
         Connection conn = DBConnection.getConnection();
         PreparedStatement statement = conn.prepareStatement(query);
         ResultSet rs = statement.executeQuery();
         while (rs.next()) {
-            int id = rs.getInt("customer_ID");
-            customerIdList.add(String.valueOf(id));
+            String customer = rs.getString("customer_name");
+            customerList.add(customer);
         }
     }
 
@@ -168,6 +171,27 @@ public class AppointmentScreen implements Initializable {
     }
 
     /**
+     * Method to clear all fields in the form
+     */
+    public void clearFields() {
+        titleField.clear();
+        descField.clear();
+        locField.clear();
+        typeField.clear();
+        appIdField.clear();
+        customerBox.getSelectionModel().clearSelection();
+        contactBox.getSelectionModel().clearSelection();
+
+        if (boxListening) {
+            dateBox.setValue(null);
+            startHourBox.getSelectionModel().clearSelection();
+            startMinBox.getSelectionModel().clearSelection();
+            endHourBox.getSelectionModel().clearSelection();
+            endMinBox.getSelectionModel().clearSelection();
+        }
+    }
+
+    /**
      * Method to initialize screen, populates all tables and boxes
      * @param url
      * @param resourceBundle
@@ -198,15 +222,15 @@ public class AppointmentScreen implements Initializable {
 
         //populate customer id comboBox
         try {
-            setCustomerIdList();
+            setCustomerList();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
-        customerBox.setItems(customerIdList);
+        customerBox.setItems(customerList);
 
         //populate UserIdField
         try {
-            int userId = Function.getUserId(getUser.get());
+            int userId = Converters.getUserId(getUser.get());
             userIdField.setText(String.valueOf(userId));
         } catch (SQLException throwables) {
             userIdField.setText("1");
@@ -221,6 +245,11 @@ public class AppointmentScreen implements Initializable {
         contactBox.setItems(contactList);
     }
 
+    /**
+     * Method that gives functionalty to the add Appointment button which adds appointment with entered information into database
+     * @param actionEvent
+     * @throws SQLException
+     */
     public void addPress(ActionEvent actionEvent) throws SQLException {
         if (appIdField.getText().isEmpty()) {
             // declare boolean that indicates successful addition to database
@@ -267,8 +296,8 @@ public class AppointmentScreen implements Initializable {
 
             try {
                 //Parse contact and customer id comboBoxes
-                int custId = Integer.parseInt(String.valueOf(customerBox.getValue()));
-                int contactId = Function.getContactId(String.valueOf(contactBox.getValue()));
+                int custId = Converters.getCustomerId(String.valueOf(customerBox.getValue()));
+                int contactId = Converters.getContactId(String.valueOf(contactBox.getValue()));
 
                 //get selected date
                 setDateTime();
@@ -295,19 +324,16 @@ public class AppointmentScreen implements Initializable {
 
 
             } catch (SQLException throwables) {
-                throwables.printStackTrace();
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Insufficient Information");
+                alert.setContentText("Please select Appointment customer and contact");
+                alert.showAndWait();
+                updated = false;
             }
             catch (NullPointerException e) {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Insufficient Information");
                 alert.setContentText("Please select appointment date, start time and end time");
-                alert.showAndWait();
-                updated = false;
-            }
-            catch (NumberFormatException e) {
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Insufficient Information");
-                alert.setContentText("Please select customer Id and contact");
                 alert.showAndWait();
                 updated = false;
             }
@@ -317,6 +343,9 @@ public class AppointmentScreen implements Initializable {
                 aList.clearAppointmentList();
                 aList.updateAppointments();
                 appointmentsTable.setItems(aList.getAppointmentList());
+
+                //clear fields
+                clearFields();
             }
         } else {
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -327,6 +356,55 @@ public class AppointmentScreen implements Initializable {
     }
 
     public void upPress(ActionEvent actionEvent) {
+        try {
+            Appointment selected = (Appointment) appointmentsTable.getSelectionModel().getSelectedItem();
+
+            //populate fields
+            titleField.setText(String.valueOf(selected.getTitle()));
+            descField.setText(selected.getDesc());
+            locField.setText(selected.getLocat());
+            typeField.setText(selected.getType());
+            appIdField.setText(String.valueOf(selected.getAppId()));
+
+            //set Calendar selection
+            try {
+                LocalDate date = selected.getStart().toLocalDateTime().toLocalDate();
+                dateBox.setValue(date);
+            } catch (NullPointerException e) {
+            }
+
+            //set start and end ComboBoxes
+
+            //start hour
+            long startHours = selected.getStart().getTime();
+            long totalHours = TimeUnit.MILLISECONDS.toHours(startHours);
+            int hours = (int) totalHours%24;
+            startMinBox.getSelectionModel().select(hours);
+
+            //start min
+            long startMinutes = selected.getStart().getTime();
+            long totalMinutes = TimeUnit.MILLISECONDS.toMinutes(startMinutes);
+            int minutes = (int) totalMinutes%60;
+            startMinBox.getSelectionModel().select(minutes);
+
+            //end hour
+            long endHours = selected.getEnd().getTime();
+            long totalEndHours = TimeUnit.MILLISECONDS.toHours(startHours);
+            int hours2 = (int) totalEndHours%24;
+            startMinBox.getSelectionModel().select(hours2);
+
+            //start min
+            long endMinutes = selected.getStart().getTime();
+            long totalEndMinutes = TimeUnit.MILLISECONDS.toMinutes(endMinutes);
+            int minutes2 = (int) totalEndMinutes%60;
+            startMinBox.getSelectionModel().select(minutes2);
+
+        } catch (NullPointerException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("No selection");
+            alert.setContentText("Please select Customer to update.");
+            alert.showAndWait();
+        }
     }
 
     public void savePress(ActionEvent actionEvent) {
@@ -335,7 +413,41 @@ public class AppointmentScreen implements Initializable {
     public void cancelPress(ActionEvent actionEvent) {
     }
 
+    /**
+     * Adds functionality to delete button which deletes selected appointment
+     * @param actionEvent
+     */
     public void delPress(ActionEvent actionEvent) {
+        try {
+            Appointment selected = (Appointment) appointmentsTable.getSelectionModel().getSelectedItem();
+            int idDel = selected.getAppId();
+
+            Connection conn = DBConnection.getConnection();
+            String query = "Delete from appointments WHERE appointment_id = " + idDel;
+
+            try {
+                PreparedStatement statement = conn.prepareStatement(query);
+                statement.executeUpdate();
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+
+            aList.clearAppointmentList();
+            aList.updateAppointments();
+            appointmentsTable.setItems(aList.getAppointmentList());
+            clearFields();
+
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Success!");
+            alert.setContentText("Appointment has been deleted from database");
+            alert.showAndWait();
+
+        } catch (NullPointerException e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("No selection");
+            alert.setContentText("Please select Appointment to delete.");
+            alert.showAndWait();
+        }
     }
 
     public void clearPress(ActionEvent actionEvent) {
@@ -344,6 +456,20 @@ public class AppointmentScreen implements Initializable {
     public void backPress(ActionEvent actionEvent) {
     }
 
+    /**
+     * Method that makes sure selected date is not in the past
+     * @param actionEvent
+     */
     public void dateBoxSelect(ActionEvent actionEvent) {
+        if (boxListening) {
+            LocalDate selected = dateBox.getValue();
+            if (selected.compareTo(LocalDate.now()) < 0) {
+                dateBox.setValue(null);
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Invalid Date");
+                alert.setContentText("Please select future or present date");
+                alert.showAndWait();
+            }
+        }
     }
 }

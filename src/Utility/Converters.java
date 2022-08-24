@@ -5,7 +5,7 @@ import database.DBConnection;
 import java.sql.*;
 import java.time.LocalDateTime;
 
-public abstract class Function {
+public abstract class Converters {
 
     public static int getUserId(String userName) throws SQLException {
         String query = "SELECT User_ID FROM USERS WHERE User_Name = '" + userName + "'";
@@ -42,5 +42,15 @@ public abstract class Function {
         rs2.next();
         String country = rs2.getString("country");
         return country;
+    }
+
+    public static int getCustomerId(String customer) throws SQLException {
+        String query = "SELECT customer_id FROM customers WHERE customer_name = '" + customer + "'";
+        Connection conn = DBConnection.getConnection();
+        PreparedStatement statement = conn.prepareStatement(query);
+        ResultSet rs = statement.executeQuery();
+        rs.next();
+        int customerId = rs.getInt("customer_id");
+        return customerId;
     }
 }

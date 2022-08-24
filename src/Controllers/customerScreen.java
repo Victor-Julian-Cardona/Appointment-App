@@ -1,7 +1,7 @@
 package Controllers;
 
 import Utility.CustomerList;
-import Utility.Function;
+import Utility.Converters;
 import database.DBConnection;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -144,6 +144,29 @@ public class customerScreen implements Initializable {
     }
 
     /**
+     * Method to reset clear all fields and reset comboBoxes
+     */
+    public void clearData() {
+        //Clear fields
+        nameField.clear();
+        phoneFIeld.clear();
+        postalField.clear();
+        addressField.clear();
+        idfield.clear();
+
+        //Clear comboBoxes
+        countryListen = false;
+        stateListen = false;
+        stateBox.getSelectionModel().clearSelection();
+        stateBox.setItems(null);
+        countryBox.getSelectionModel().clearSelection();
+        countryBox.setItems(null);
+        countryListen = true;
+        stateListen = true;
+        setCountryCombo();
+    }
+
+    /**
      * Method that initializes the comboboxes and the Customer table
      * @param url
      * @param resourceBundle
@@ -171,7 +194,6 @@ public class customerScreen implements Initializable {
      * repopulates table
      * @param actionEvent
      */
-
     public void addPress(ActionEvent actionEvent) {
 
         if(idfield.getText().isEmpty()) {
@@ -253,29 +275,6 @@ public class customerScreen implements Initializable {
     }
 
     /**
-     * Method to reset clear all fields and reset comboBoxes
-     */
-    public void clearData() {
-        //Clear fields
-        nameField.clear();
-        phoneFIeld.clear();
-        postalField.clear();
-        addressField.clear();
-        idfield.clear();
-
-        //Clear comboBoxes
-        countryListen = false;
-        stateListen = false;
-        stateBox.getSelectionModel().clearSelection();
-        stateBox.setItems(null);
-        countryBox.getSelectionModel().clearSelection();
-        countryBox.setItems(null);
-        countryListen = true;
-        stateListen = true;
-        setCountryCombo();
-    }
-
-    /**
      * Functionality for updateButton that populates all fields and comboBoxes with information of customer selected for update
      * @param actionEvent
      */
@@ -294,7 +293,7 @@ public class customerScreen implements Initializable {
 
             //set comboBox selection
             try {
-                String country = Function.getCountry(selected.getDivId());
+                String country = Converters.getCountry(selected.getDivId());
                 for (int i = 0; i < countryList.size(); i++) {
                     if (country.equals(countryList.get(i))) {
                         countryBox.getSelectionModel().select(i);
