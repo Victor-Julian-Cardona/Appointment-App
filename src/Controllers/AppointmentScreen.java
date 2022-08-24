@@ -140,6 +140,9 @@ public class AppointmentScreen implements Initializable {
         }
     }
 
+    /**
+     * Parse date and time combo boxes
+     */
     public void setDateTime() {
         //parse date
         LocalDate dateInput = dateBox.getValue();
