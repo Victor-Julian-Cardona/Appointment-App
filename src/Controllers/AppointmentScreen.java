@@ -41,7 +41,6 @@ public class AppointmentScreen implements Initializable {
     public TableView appointmentsTable;
     public Button upButton;
     public Button saveButton;
-    public Button cancelButton;
     public Button delButton;
     public Button addButton;
     public Button clearButton;
@@ -67,12 +66,17 @@ public class AppointmentScreen implements Initializable {
     /**
      * declare LocalDateTimes start and end parsed from comboBoxes
      */
-    private LocalDateTime startDateTime, endDateTime;
+    private Timestamp startDateTime, endDateTime;
 
     /**
      * Declare boolean to check if callendar and comboBoxes are listening
      */
     private boolean boxListening = true;
+
+    /**
+     * declare boolean to indicate if dates were set
+     */
+    private boolean datesSet = true;
 
     /**
      * Declare object aList of the AppointmentList class to be used in the AppointmentScreen controller
@@ -104,7 +108,7 @@ public class AppointmentScreen implements Initializable {
      */
     public ObservableList getHourList() {
         ObservableList<String> hourList = FXCollections.observableArrayList();
-        for ( int i = 8; i <= 22; i++) {
+        for ( int i = 0; i < 24; i++) {
             hourList.add(String.valueOf(i));
         }
         return hourList;
@@ -152,12 +156,24 @@ public class AppointmentScreen implements Initializable {
 
     /**
      * Parse date and time combo boxes
+     * set them to a UTC timestamp to pass to sql
+     * displays error message if attempted inputs are outside of office hours
      */
     public void setDateTime() {
         //check all date and time related boxes have a selected value
-        if(dateBox.getValue() != null || startMinBox.getValue() != null || startHourBox.getValue() != null || endHourBox.getValue() != null || endMinBox.getValue() != null) {
-            //parse date
-            LocalDate dateInput = dateBox.getValue();
+        if(dateBox.getValue() != null && startMinBox.getValue() != null && startHourBox.getValue() != null && endHourBox.getValue() != null && endMinBox.getValue() != null) {
+
+            //parse date, sets end date to day after selected date if start hour is greater than end hour
+            LocalDate dateInputStart;
+            LocalDate dateInputEnd;
+            if (Integer.parseInt(String.valueOf(startHourBox.getValue())) > Integer.parseInt(String.valueOf(endHourBox.getValue()))) {
+                dateInputEnd = dateBox.getValue().plusDays(1);
+                dateInputStart = dateBox.getValue();
+            }
+            else {
+                dateInputStart = dateBox.getValue();
+                dateInputEnd = dateBox.getValue();
+            }
 
             //parse hours and minutes of end and start
             try {
@@ -170,16 +186,56 @@ public class AppointmentScreen implements Initializable {
                 LocalTime timeStart = LocalTime.of(startTimeHour, startTimeMin);
                 LocalTime timeEnd = LocalTime.of(endTimeHour, endTimeMin);
 
-                //create LocalDateTime variables with parsed end and start times and parsed Date
-                startDateTime = LocalDateTime.of(dateInput, timeStart);
-                endDateTime = LocalDateTime.of(dateInput, timeEnd);
+                //create LocalTime variables of office hours
+                LocalTime officeTimeStart = LocalTime.of(8, 0);
+                LocalTime officeTimeEnd = LocalTime.of(22, 0);
 
-            } catch (NumberFormatException | NullPointerException e) {}
+                //Check to see if dates and times selected are within office hours
+                Timestamp estStart = Converters.localToEST(Timestamp.valueOf(LocalDateTime.of(dateInputStart, timeStart)));
+                Timestamp estEnd = Converters.localToEST(Timestamp.valueOf(LocalDateTime.of(dateInputEnd, timeEnd)));
+                Timestamp officeStart = Converters.localToEST(Timestamp.valueOf(LocalDateTime.of(dateInputStart, officeTimeStart)));
+                Timestamp officeEnd = Converters.localToEST(Timestamp.valueOf(LocalDateTime.of(dateInputStart, officeTimeEnd)));
+                if (estStart.compareTo(officeStart) < 0 || estEnd.compareTo(officeEnd) > 0) {
+                    //error message
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Appointment is outside office hours");
+                    alert.setContentText("Office hours are 8:00-22:00 EST");
+                    alert.showAndWait();
+
+                    //clear boxes
+                    boxListening = false;
+                    dateBox.setValue(null);
+                    startHourBox.getSelectionModel().clearSelection();
+                    startMinBox.getSelectionModel().clearSelection();
+                    endHourBox.getSelectionModel().clearSelection();
+                    endMinBox.getSelectionModel().clearSelection();
+                    boxListening  = true;
+
+                    //set start min, end hour and end min as disabled
+                    endMinBox.setDisable(true);
+                    endHourBox.setDisable(true);
+                    startMinBox. setDisable(true);
+
+                    //Ends method call so no date or time data is recorded
+                    datesSet = false;
+                    return;
+
+                }
+
+                //create LocalDateTime variables with parsed end and start times and parsed Date
+                //convert that LocalDateTime to a Timestamp
+                //convert the timestamp to UTC time with converter method
+                startDateTime = Converters.localToUTC(Timestamp.valueOf(LocalDateTime.of(dateInputStart, timeStart)));
+                endDateTime = Converters.localToUTC(Timestamp.valueOf(LocalDateTime.of(dateInputEnd, timeEnd)));
+                datesSet = true;
+
+            } catch (NumberFormatException | NullPointerException e) {
+            }
         }
         else {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Insufficient Information");
-            alert.setContentText("Please select appointment date, start time and end time");
+            alert.setContentText("Please select date, start time and end time");
             alert.showAndWait();
         }
     }
@@ -205,6 +261,11 @@ public class AppointmentScreen implements Initializable {
         endHourBox.getSelectionModel().clearSelection();
         endMinBox.getSelectionModel().clearSelection();
         boxListening  = true;
+
+        //set start min, end hour and end min as disabled
+        endMinBox.setDisable(true);
+        endHourBox.setDisable(true);
+        startMinBox. setDisable(true);
 
     }
 
@@ -265,7 +326,6 @@ public class AppointmentScreen implements Initializable {
         startMinBox.setDisable(true);
         endHourBox.setDisable(true);
         endMinBox.setDisable(true);
-
     }
 
     /**
@@ -293,7 +353,6 @@ public class AppointmentScreen implements Initializable {
                 alert.setTitle("Insufficient information");
                 alert.setContentText("Please fill all information boxes");
                 alert.showAndWait();
-                updated = false;
                 return;
             }
 
@@ -309,6 +368,9 @@ public class AppointmentScreen implements Initializable {
 
             //get selected date
             setDateTime();
+            if (!datesSet) {
+                return;
+            }
 
             //get user
             int userId = Integer.parseInt(userIdField.getText());
@@ -322,9 +384,6 @@ public class AppointmentScreen implements Initializable {
                 int custId = Converters.getCustomerId(String.valueOf(customerBox.getValue()));
                 int contactId = Converters.getContactId(String.valueOf(contactBox.getValue()));
 
-                //get selected date
-                setDateTime();
-
                 //Populate sql statement
                 PreparedStatement statement = conn.prepareStatement(query);
                 statement.setInt(1, max);
@@ -332,8 +391,8 @@ public class AppointmentScreen implements Initializable {
                 statement.setString(3, descInput);
                 statement.setString(4, locationInput);
                 statement.setString(5, typeInput);
-                statement.setTimestamp(6, Timestamp.valueOf(startDateTime));
-                statement.setTimestamp(7, Timestamp.valueOf(endDateTime));
+                statement.setTimestamp(6, startDateTime);
+                statement.setTimestamp(7, endDateTime);
                 statement.setTimestamp(8, todayTime);
                 statement.setString(9, createBy);
                 statement.setTimestamp(10, todayTime);
@@ -373,7 +432,7 @@ public class AppointmentScreen implements Initializable {
         } else {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Currently Updating");
-            alert.setContentText("Cannot add appointment when currently updating appointment. Please press clear button, then proceed to add appointment");
+            alert.setContentText("Cannot add appointment when currently updating appointment. Please clear fields before adding an Appointment");
             alert.showAndWait();
         }
     }
@@ -384,92 +443,84 @@ public class AppointmentScreen implements Initializable {
      * @param actionEvent
      */
     public void upPress(ActionEvent actionEvent) {
-        if(appIdField.getText().isEmpty()) {
-            try {
-                Appointment selected = (Appointment) appointmentsTable.getSelectionModel().getSelectedItem();
+        try {
+            Appointment selected = (Appointment) appointmentsTable.getSelectionModel().getSelectedItem();
 
-                //populate fields
-                titleField.setText(String.valueOf(selected.getTitle()));
-                descField.setText(selected.getDesc());
-                locField.setText(selected.getLocat());
-                typeField.setText(selected.getType());
-                appIdField.setText(String.valueOf(selected.getAppId()));
+            //populate fields
+            titleField.setText(String.valueOf(selected.getTitle()));
+            descField.setText(selected.getDesc());
+            locField.setText(selected.getLocat());
+            typeField.setText(selected.getType());
+            appIdField.setText(String.valueOf(selected.getAppId()));
 
-                boxListening = false;
+            boxListening = false;
 
-                //set Calendar selection
-                LocalDate date = selected.getStart().toLocalDateTime().toLocalDate();
-                dateBox.setValue(date);
+            //set Calendar selection
+            LocalDate date = selected.getStart().toLocalDateTime().toLocalDate();
+            dateBox.setValue(date);
 
-                //set start and end ComboBoxes
-                //start hour
-                long startHours = selected.getStart().getTime();
-                long totalStartHours = TimeUnit.MILLISECONDS.toHours(startHours);
-                String startHoursMod = String.valueOf((totalStartHours % 24)-4);
-                for (int i = 0; i < getHourList().size(); i++) {
-                    if (startHoursMod.equals(getHourList().get(i))) {
-                        startHourBox.getSelectionModel().select(i);
-                    }
+            //set start and end ComboBoxes
+            //start hour
+            long startHours = selected.getStart().getTime();
+            long totalStartHours = TimeUnit.MILLISECONDS.toHours(startHours);
+            String startHoursMod = String.valueOf((totalStartHours % 24)-4);
+            for (int i = 0; i < getHourList().size(); i++) {
+                if (startHoursMod.equals(getHourList().get(i))) {
+                    startHourBox.getSelectionModel().select(i);
                 }
-
-                //start min
-                long startMinutes = selected.getStart().getTime();
-                long totalStartMinutes = TimeUnit.MILLISECONDS.toMinutes(startMinutes);
-                String startMinutesMod = String.valueOf(totalStartMinutes % 60);
-                for (int i = 0; i < getMinuteList().size(); i++) {
-                    if (startMinutesMod.equals(getMinuteList().get(i))) {
-                        startMinBox.getSelectionModel().select(i);
-                    }
-                }
-
-                //end hour
-                long endHours = selected.getEnd().getTime();
-                long totalEndHours = TimeUnit.MILLISECONDS.toHours(endHours);
-                String endHoursMod = String.valueOf((totalEndHours % 24)-4);
-                for (int i = 0; i < getHourList().size(); i++) {
-                    if (endHoursMod.equals(getHourList().get(i))) {
-                        endHourBox.getSelectionModel().select(i);
-                    }
-                }
-
-                //end min
-                long endMinutes = selected.getEnd().getTime();
-                long totalEndMinutes = TimeUnit.MILLISECONDS.toMinutes(endMinutes);
-                String endMinutesMod = String.valueOf(totalEndMinutes % 60);
-                for (int i = 0; i < getMinuteList().size(); i++) {
-                    if (endMinutesMod.equals(getMinuteList().get(i))) {
-                        endMinBox.getSelectionModel().select(i);
-                    }
-                }
-
-                // set customer and contact comboBoxes
-                int selectedCustomerId = selected.getCustId();
-                customerBox.getSelectionModel().select(Converters.getCustomer(selectedCustomerId));
-                int selectedContactId = selected.getContId();
-                contactBox.getSelectionModel().select(Converters.getContact(selectedContactId));
-
-                boxListening = true;
-                startMinBox.setDisable(false);
-                endMinBox.setDisable(false);
-
-            } catch (NullPointerException | SQLException e) {
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("No selection");
-                alert.setContentText("Please select Customer to update.");
-                alert.showAndWait();
             }
-        }
-        else {
+
+            //start min
+            long startMinutes = selected.getStart().getTime();
+            long totalStartMinutes = TimeUnit.MILLISECONDS.toMinutes(startMinutes);
+            String startMinutesMod = String.valueOf(totalStartMinutes % 60);
+            for (int i = 0; i < getMinuteList().size(); i++) {
+                if (startMinutesMod.equals(getMinuteList().get(i))) {
+                    startMinBox.getSelectionModel().select(i);
+                }
+            }
+
+            //end hour
+            long endHours = selected.getEnd().getTime();
+            long totalEndHours = TimeUnit.MILLISECONDS.toHours(endHours);
+            String endHoursMod = String.valueOf((totalEndHours % 24)-4);
+            for (int i = 0; i < getHourList().size(); i++) {
+                if (endHoursMod.equals(getHourList().get(i))) {
+                    endHourBox.getSelectionModel().select(i);
+                }
+            }
+
+            //end min
+            long endMinutes = selected.getEnd().getTime();
+            long totalEndMinutes = TimeUnit.MILLISECONDS.toMinutes(endMinutes);
+            String endMinutesMod = String.valueOf(totalEndMinutes % 60);
+            for (int i = 0; i < getMinuteList().size(); i++) {
+                if (endMinutesMod.equals(getMinuteList().get(i))) {
+                    endMinBox.getSelectionModel().select(i);
+                }
+            }
+
+            // set customer and contact comboBoxes
+            int selectedCustomerId = selected.getCustId();
+            customerBox.getSelectionModel().select(Converters.getCustomer(selectedCustomerId));
+            int selectedContactId = selected.getContId();
+            contactBox.getSelectionModel().select(Converters.getContact(selectedContactId));
+
+            boxListening = true;
+            startMinBox.setDisable(false);
+            endMinBox.setDisable(false);
+
+        } catch (NullPointerException | SQLException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Currently updating");
-            alert.setContentText("Please save or cancel currently updating appointment");
+            alert.setTitle("No selection");
+            alert.setContentText("Please select Customer to update.");
             alert.showAndWait();
         }
     }
 
     /**
      * Functionality for save button that updates selected appointment if all fields and boxes are populated adequately
-     * displays error messages if not
+     * Displays error messages if not
      * @param actionEvent
      */
     public void savePress(ActionEvent actionEvent) {
@@ -482,7 +533,6 @@ public class AppointmentScreen implements Initializable {
             alert.setTitle("Not updating");
             alert.setContentText("Please select appointment to update before attempting to save");
             alert.showAndWait();
-            updated = false;
             return;
         }
 
@@ -492,7 +542,6 @@ public class AppointmentScreen implements Initializable {
             alert.setTitle("Insufficient information");
             alert.setContentText("Please fill all information boxes");
             alert.showAndWait();
-            updated = false;
             return;
         }
 
@@ -509,6 +558,10 @@ public class AppointmentScreen implements Initializable {
 
         //get selected date
         setDateTime();
+        //stops method if dates were not set
+        if (!datesSet) {
+            return;
+        }
 
         //get user
         int userId = Integer.parseInt(userIdField.getText());
@@ -531,8 +584,8 @@ public class AppointmentScreen implements Initializable {
             statement.setString(2, descInput);
             statement.setString(3, locationInput);
             statement.setString(4, typeInput);
-            statement.setTimestamp(5, Timestamp.valueOf(startDateTime));
-            statement.setTimestamp(6, Timestamp.valueOf(endDateTime));
+            statement.setTimestamp(5, startDateTime);
+            statement.setTimestamp(6, endDateTime);
             statement.setTimestamp(7, todayTime);
             statement.setString(8, createBy);
             statement.setTimestamp(9, todayTime);
@@ -565,15 +618,6 @@ public class AppointmentScreen implements Initializable {
             //clear fields
             clearFields();
         }
-    }
-
-    /**
-     * Adds functionality to cancel button
-     * clears fields and cancels updating customer
-     * @param actionEvent
-     */
-    public void cancelPress(ActionEvent actionEvent) {
-        clearFields();
     }
 
     /**
@@ -656,28 +700,14 @@ public class AppointmentScreen implements Initializable {
     }
 
     /**
-     * Display error message if end hour is less than start hour
-     * clear combBox selection if selection is invalid
-     * Lambda used to populate Platform.runLater parameter
+     * Enables end minutes box and clears selection
      * @param actionEvent
      * @throws InterruptedException
      */
     public void endHourBoxPress(ActionEvent actionEvent) throws InterruptedException {
         if (boxListening) {
-            try {
-                if ((Integer.parseInt(String.valueOf(startHourBox.getValue()))) > (Integer.parseInt(String.valueOf(endHourBox.getValue())))) {
-                    Alert alert = new Alert(Alert.AlertType.ERROR);
-                    alert.setTitle("Invalid Selection");
-                    alert.setContentText("Appointment cannot end before it starts");
-                    alert.showAndWait();
-
-                    endMinBox.setDisable(true);
-
-                    Platform.runLater(() -> endHourBox.valueProperty().set(null));
-                } else {endMinBox.setDisable(false);}
-            }
-            catch (NumberFormatException e) {
-            }
+            endMinBox.setDisable(false);
+            endMinBox.getSelectionModel().clearSelection();
         }
     }
 
@@ -711,28 +741,13 @@ public class AppointmentScreen implements Initializable {
     }
 
     /**
-     * display error message if appointment begins at hour 22
-     * reset box if selection is invalid
-     * Lambda used to populate Platform.runLater parameter
+     * Clears end time selections for end min box and enables start Minutes box
      * @param actionEvent
      */
     public void startHourBoxPress(ActionEvent actionEvent) {
         if (boxListening) {
-            try {
-                if ((Integer.parseInt(String.valueOf(startHourBox.getValue()))) == 22) {
-                    Alert alert = new Alert(Alert.AlertType.ERROR);
-                    alert.setTitle("Invalid Selection");
-                    alert.setContentText("Appointment cannot start at the end of business hours");
-                    alert.showAndWait();
-
-                    startMinBox.setDisable(true);
-                    endHourBox.setDisable(true);
-                    endMinBox.setDisable(true);
-
-                    Platform.runLater(() -> startHourBox.valueProperty().set(null));
-                } else {startMinBox.setDisable(false);}
-            }
-            catch (NumberFormatException e) { }
+            startMinBox.setDisable(false);
+            endMinBox.getSelectionModel().clearSelection();
         }
     }
 

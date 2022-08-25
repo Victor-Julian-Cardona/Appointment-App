@@ -33,8 +33,8 @@ public class AppointmentList {
                 String desc = rs.getString("description");
                 String location = rs.getString("location");
                 String type = rs.getString("type");
-                Timestamp start = rs.getTimestamp("start");
-                Timestamp end = rs.getTimestamp("end");
+                Timestamp start = Converters.UTCToLocal(rs.getTimestamp("start"));
+                Timestamp end = Converters.UTCToLocal(rs.getTimestamp("end"));
                 Timestamp createDate = rs.getTimestamp("create_date");
                 String createBy = rs.getString("created_by");
                 Timestamp lastUpdate = rs.getTimestamp("last_update");

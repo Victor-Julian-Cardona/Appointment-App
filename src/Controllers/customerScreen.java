@@ -390,15 +390,6 @@ public class customerScreen implements Initializable {
     }
 
     /**
-     * functionality for cancel button that clears all fields
-     * @param actionEvent
-     */
-    public void cancelPress(ActionEvent actionEvent) {
-        clearData();
-        updatingStatus = false;
-    }
-
-    /**
      * populates the state combobox
      * @param actionEvent
      */
