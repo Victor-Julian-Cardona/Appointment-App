@@ -230,6 +230,7 @@ public class AppointmentScreen implements Initializable {
                 datesSet = true;
 
             } catch (NumberFormatException | NullPointerException e) {
+                e.printStackTrace();
             }
         }
         else {
@@ -556,13 +557,6 @@ public class AppointmentScreen implements Initializable {
         Timestamp todayTime = getTime.get();
         String createBy = getUser.get();
 
-        //get selected date
-        setDateTime();
-        //stops method if dates were not set
-        if (!datesSet) {
-            return;
-        }
-
         //get user
         int userId = Integer.parseInt(userIdField.getText());
 
@@ -577,6 +571,9 @@ public class AppointmentScreen implements Initializable {
 
             //get selected date
             setDateTime();
+            if (!datesSet) {
+                return;
+            }
 
             //Populate sql statement
             PreparedStatement statement = conn.prepareStatement(query);
@@ -596,6 +593,7 @@ public class AppointmentScreen implements Initializable {
 
             //execute sql statement
             statement.executeUpdate();
+            updated = true;
 
 
         } catch (SQLException throwables) {
@@ -708,6 +706,7 @@ public class AppointmentScreen implements Initializable {
         if (boxListening) {
             endMinBox.setDisable(false);
             endMinBox.getSelectionModel().clearSelection();
+            datesSet = false;
         }
     }
 
@@ -748,6 +747,7 @@ public class AppointmentScreen implements Initializable {
         if (boxListening) {
             startMinBox.setDisable(false);
             endMinBox.getSelectionModel().clearSelection();
+            datesSet = false;
         }
     }
 
