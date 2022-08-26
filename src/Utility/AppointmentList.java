@@ -65,4 +65,19 @@ public class AppointmentList {
      */
     public static void clearAppointmentList() {aList.clear();}
 
+    /**
+     * Method to remove selected appointment from list
+     * @param selected
+     */
+    public static void removeAppointment(Appointment selected) {
+        aList.remove(selected);
+    }
+
+    /**
+     * Method to add an appointment to the list
+     * @param newApp
+     */
+    public static void addAppointment(Appointment newApp) {
+        aList.remove(newApp);
+    }
 }
