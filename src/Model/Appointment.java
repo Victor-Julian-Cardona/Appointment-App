@@ -1,7 +1,12 @@
 package Model;
 
+import Utility.Converters;
+
 import java.sql.Timestamp;
 
+/**
+ * Appointment class that holds all the information of a given appointment
+ */
 public class Appointment {
 
     private final int appId;

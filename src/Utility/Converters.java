@@ -1,14 +1,14 @@
 package Utility;
 
 import database.DBConnection;
-
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
 
-public abstract class Converters {
+/**
+ * class
+ */
+public class Converters {
 
     /**
      * Utility method that takes userId and returns User name
@@ -113,6 +113,11 @@ public abstract class Converters {
         return contact;
     }
 
+    /**
+     * Converts localtime of user to UTC
+     * @param localTime
+     * @return UTC Timestamp
+     */
     static public Timestamp localToUTC(Timestamp localTime) {
         long offset = TimeZone.getDefault().getOffset(Timestamp.valueOf(LocalDateTime.now()).getTime());
         long time = localTime.getTime();
@@ -121,10 +126,15 @@ public abstract class Converters {
         return converted;
     }
 
-    static public Timestamp UTCToLocal(Timestamp localTime) {
-        long offset = TimeZone.getDefault().getOffset(localTime.getTime());
-        long time = localTime.getTime();
-        Timestamp converted = localTime;
+    /**
+     * Converts a Timestamp in UTC to localtime of user
+     * @param UTCTime
+     * @return localtimeTimestamp
+     */
+    static public Timestamp UTCToLocal(Timestamp UTCTime) {
+        long offset = TimeZone.getDefault().getOffset(UTCTime.getTime());
+        long time = UTCTime.getTime();
+        Timestamp converted = UTCTime;
         converted.setTime(time + offset);
         return converted;
     }
@@ -133,7 +143,7 @@ public abstract class Converters {
      * Method to convert local time to EST
      * converts to UTC first, then converts to EST
      * @param localTime
-     * @return
+     * @return EST time
      */
     static public Timestamp localToEST(Timestamp localTime) {
         long localOffset = TimeZone.getDefault().getOffset(Timestamp.valueOf(LocalDateTime.now()).getTime());
@@ -151,7 +161,7 @@ public abstract class Converters {
      * Converts EST to local time
      * First converts to UTC then to local
      * @param EST
-     * @return
+     * @return local time
      */
     static public Timestamp ESTToLocal(Timestamp EST) {
         TimeZone estZone = TimeZone.getTimeZone("EST");
@@ -166,9 +176,9 @@ public abstract class Converters {
     }
 
     /**
-     * Converts EST to local time
+     * Converts EST to UTC time
      * @param EST
-     * @return
+     * @return UTC time
      */
     public static Timestamp estToUTC(Timestamp EST) {
         TimeZone estZone = TimeZone.getTimeZone("EST");
@@ -182,7 +192,7 @@ public abstract class Converters {
     /**
      * Method to convert UTC to EST
      * @param UTC
-     * @return
+     * @return EST time
      */
     static public Timestamp utcToEST(Timestamp UTC) {
         long utcTime = UTC.getTime();

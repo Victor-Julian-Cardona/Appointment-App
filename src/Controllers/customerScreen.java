@@ -1,6 +1,6 @@
 package Controllers;
 
-import Utility.CustomerList;
+import Model.CustomerList;
 import Utility.Converters;
 import database.DBConnection;
 import javafx.collections.FXCollections;
@@ -91,12 +91,12 @@ public class customerScreen implements Initializable {
     /**
      * Lambda supplier expression to get user name from login screen
      */
-    Supplier<String> getUser = () -> login.user;
+    public Supplier<String> getUser = () -> login.user;
 
     /**
      * Lambda supplier expression to get current date andtime
      */
-    Supplier<Timestamp> getTime = () -> Timestamp.valueOf(LocalDateTime.now());
+    public Supplier<Timestamp> getTime = () -> Timestamp.valueOf(LocalDateTime.now());
 
     /**
      * Method to populate country combo box

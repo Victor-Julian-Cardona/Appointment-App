@@ -1,10 +1,9 @@
 package Controllers;
 
 import Model.Appointment;
-import Utility.AppointmentList;
+import Model.AppointmentList;
 import Utility.Converters;
 import database.DBConnection;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -22,6 +21,8 @@ import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
@@ -63,6 +64,7 @@ public class AppointmentScreen implements Initializable {
     public RadioButton thisWeekRad;
     public RadioButton thisMonthRad;
     public ToggleGroup tableFilter;
+    public DatePicker dateFilter;
 
     /**
      * declare LocalDateTimes start and end parsed from comboBoxes
@@ -90,6 +92,11 @@ public class AppointmentScreen implements Initializable {
     private AppointmentList aList = new AppointmentList();
 
     /**
+     * Declare list filterList to be displayed when filter radials are selected
+     */
+    private AppointmentList filterList = new AppointmentList();
+
+    /**
      * Declare observable list of all customerIds
      */
     private ObservableList<String> customerList = FXCollections.observableArrayList();
@@ -102,12 +109,12 @@ public class AppointmentScreen implements Initializable {
     /**
      * Lambda supplier expression to get user name from login screen
      */
-    Supplier<String> getUser = () -> login.user;
+    public Supplier<String> getUser = () -> login.user;
 
     /**
-     * Lambda supplier expression to get current date andtime
+     * Lambda supplier expression to get current date and time
      */
-    Supplier<Timestamp> getCurrTime = () -> Timestamp.valueOf(LocalDateTime.now());
+    public Supplier<Timestamp> getCurrTime = () -> Timestamp.valueOf(LocalDateTime.now());
 
     /**
      * Method to get observable list of buisness hours
@@ -167,12 +174,14 @@ public class AppointmentScreen implements Initializable {
      * displays error messages if attempted inputs imply appointment has no duration or negative duration
      */
     public void setDateTime() {
+        datesSet = false;
         //check all date and time related boxes have a selected value
         if(dateBox.getValue() != null && startMinBox.getValue() != null && startHourBox.getValue() != null && endHourBox.getValue() != null && endMinBox.getValue() != null) {
 
             //parse date, sets end date to day after selected date if start hour is greater than end hour
             LocalDate dateInputStart = dateBox.getValue();
             LocalDate dateInputEnd;
+
             if (Integer.parseInt(String.valueOf(startHourBox.getValue())) > Integer.parseInt(String.valueOf(endHourBox.getValue()))) {
                 dateInputEnd = dateBox.getValue().plusDays(1);
             }
@@ -232,8 +241,8 @@ public class AppointmentScreen implements Initializable {
                 //create LocalDateTime variables with parsed end and start times and parsed Date
                 //convert that LocalDateTime to a Timestamp
                 //convert the timestamp to UTC time with converter method
-                startDateTime = Converters.localToUTC(Timestamp.valueOf(LocalDateTime.of(dateInputStart, timeStart)));
-                endDateTime = Converters.localToUTC(Timestamp.valueOf(LocalDateTime.of(dateInputEnd, timeEnd)));
+                startDateTime = Timestamp.valueOf(LocalDateTime.of(dateInputStart, timeStart));
+                endDateTime = Timestamp.valueOf(LocalDateTime.of(dateInputEnd, timeEnd));
 
                 //Check for conflicts
                 if (conflictCheck(startDateTime, endDateTime)) {
@@ -244,6 +253,8 @@ public class AppointmentScreen implements Initializable {
                     datesSet = false;
                 }
                 else {
+                    startDateTime = Converters.localToUTC(startDateTime);
+                    endDateTime = Converters.localToUTC(endDateTime);
                     datesSet = true;
                 }
 
@@ -268,12 +279,14 @@ public class AppointmentScreen implements Initializable {
      * @return conflict
      */
     public boolean conflictCheck(Timestamp start, Timestamp end) {
-        Stream<Appointment> myStream = AppointmentList.getAppointmentList().stream();
+        Stream<Appointment> myStream = aList.getAppointmentList().stream();
         long conflictCount = myStream.filter(c -> (c.getStart().compareTo(start) < 0 && c.getEnd().compareTo(start) > 0) || (c.getStart().compareTo(end) < 0 && c.getEnd().compareTo(end) > 0)).count();
-        Stream<Appointment> myStream2 = AppointmentList.getAppointmentList().stream();
+        Stream<Appointment> myStream2 = aList.getAppointmentList().stream();
         long conflictCountEqual = myStream2.filter( c -> c.getStart().compareTo(start) == 0 || c.getEnd().compareTo(end) == 0).count();
+        Stream<Appointment> myStream3 = aList.getAppointmentList().stream();
+        long conflictCountEncompass = myStream3.filter(c -> (c.getStart().compareTo(start) > 0 && c.getEnd().compareTo(end) < 0) || (c.getStart().compareTo(start) < 0 && c.getEnd().compareTo(end) > 0)).count();
         boolean conflict = false;
-        if ((conflictCount + conflictCountEqual) > 0) {
+        if ((conflictCount + conflictCountEqual+conflictCountEncompass) > 0) {
             conflict = true;
         }
         return conflict;
@@ -295,17 +308,37 @@ public class AppointmentScreen implements Initializable {
         //clear boxes
         boxListening = false;
         dateBox.setValue(null);
+        dateBox.setPromptText("Select Appointment month/date/year");
         startHourBox.getSelectionModel().clearSelection();
         startMinBox.getSelectionModel().clearSelection();
         endHourBox.getSelectionModel().clearSelection();
         endMinBox.getSelectionModel().clearSelection();
         boxListening  = true;
+    }
 
-        //set start min, end hour and end min as disabled
-        endMinBox.setDisable(true);
-        endHourBox.setDisable(true);
-        startMinBox. setDisable(true);
+    /**
+     * Method to get smallest available appointment_id
+     * @return
+     * @throws SQLException
+     */
+    public int getNewAppId() throws SQLException {
 
+        int newId = 1;
+        List idList = new ArrayList();
+        Connection conn = DBConnection.getConnection();
+        String query = "SELECT appointment_id FROM Appointments ORDER BY appointment_id";
+        PreparedStatement statement = conn.prepareStatement(query);
+        ResultSet rs = statement.executeQuery();
+        while (rs.next()) {
+            int appId = rs.getInt("appointment_id");
+            idList.add(appId);
+        }
+        for (int i = 0; i < idList.size(); i++) {
+            if (newId == Integer.parseInt(String.valueOf(idList.get(i)))) {
+                newId++;
+            }
+        }
+        return newId;
     }
 
     /**
@@ -318,7 +351,6 @@ public class AppointmentScreen implements Initializable {
 
         aList.clearAppointmentList();
         aList.updateAppointments();
-        appointmentsTable.getSortOrder().add(appIdCol);
         appointmentsTable.setItems(aList.getAppointmentList());
 
         //populate table
@@ -364,7 +396,7 @@ public class AppointmentScreen implements Initializable {
     }
 
     /**
-     * Method that gives functionalty to the add Appointment button which adds appointment with entered information into database
+     * Method that gives functionality to the add Appointment button which adds appointment with entered information into database
      * @param actionEvent
      * @throws SQLException
      */
@@ -373,13 +405,7 @@ public class AppointmentScreen implements Initializable {
             // declare boolean that indicates successful addition to database
             boolean updated = true;
 
-            //make new sequential id
-            int max = 1;
-            for (int i = 0; i < aList.getAppointmentList().size(); i++) {
-                if (max == aList.getAppointmentList().get(i).getAppId()) {
-                    max++;
-                }
-            }
+            int newAppId = getNewAppId();
 
             //Error message if user does not populate all fields
             if (titleField.getText().isEmpty() || descField.getText().isEmpty() || locField.getText().isEmpty() || typeField.getText().isEmpty()) {
@@ -421,7 +447,7 @@ public class AppointmentScreen implements Initializable {
 
                 //Populate sql statement
                 PreparedStatement statement = conn.prepareStatement(query);
-                statement.setInt(1, max);
+                statement.setInt(1, newAppId);
                 statement.setString(2, titleInput);
                 statement.setString(3, descInput);
                 statement.setString(4, locationInput);
@@ -443,7 +469,7 @@ public class AppointmentScreen implements Initializable {
             } catch (SQLException throwables) {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Insufficient Information");
-                alert.setContentText("Please select Appointment customer and contact");
+                alert.setContentText("Please select customer ID and contact ID");
                 alert.showAndWait();
                 updated = false;
             }
@@ -456,10 +482,22 @@ public class AppointmentScreen implements Initializable {
             }
 
             if (updated) {
-                //Update table with new values
-                aList.clearAppointmentList();
-                aList.updateAppointments();
-                appointmentsTable.setItems(aList.getAppointmentList());
+                //Update table with new values depending on filter
+                if (allRad.isSelected()) {
+                    aList.clearAppointmentList();
+                    aList.updateAppointments();
+                    appointmentsTable.setItems(aList.getAppointmentList());
+                }
+                if (thisWeekRad.isSelected()) {
+                    filterList.clearAppointmentList();
+                    filterList.filterWeek(dateFilter.getValue());
+                    appointmentsTable.setItems(filterList.getAppointmentList());
+                }
+                if(thisMonthRad.isSelected()) {
+                    filterList.clearAppointmentList();
+                    filterList.filterMonth(dateFilter.getValue());
+                    appointmentsTable.setItems(filterList.getAppointmentList());
+                }
 
                 //clear fields
                 clearFields();
@@ -483,7 +521,7 @@ public class AppointmentScreen implements Initializable {
                 //remove updating appointment from list and place in placeholder
                 Appointment selected = (Appointment) appointmentsTable.getSelectionModel().getSelectedItem();
                 updatingApp = selected;
-                AppointmentList.removeAppointment(selected);
+                aList.removeAppointment(selected);
 
                 //populate fields
                 titleField.setText(String.valueOf(selected.getTitle()));
@@ -653,10 +691,22 @@ public class AppointmentScreen implements Initializable {
         }
 
         if (updated) {
-            //Update table with new values
-            aList.clearAppointmentList();
-            aList.updateAppointments();
-            appointmentsTable.setItems(aList.getAppointmentList());
+            //Update table with new values depending on filter
+            if (allRad.isSelected()) {
+                aList.clearAppointmentList();
+                aList.updateAppointments();
+                appointmentsTable.setItems(aList.getAppointmentList());
+            }
+            if (thisWeekRad.isSelected()) {
+                filterList.clearAppointmentList();
+                filterList.filterWeek(dateFilter.getValue());
+                appointmentsTable.setItems(filterList.getAppointmentList());
+            }
+            if(thisMonthRad.isSelected()) {
+                filterList.clearAppointmentList();
+                filterList.filterMonth(dateFilter.getValue());
+                appointmentsTable.setItems(filterList.getAppointmentList());
+            }
 
             //clear fields
             clearFields();
@@ -668,41 +718,60 @@ public class AppointmentScreen implements Initializable {
      * @param actionEvent
      */
     public void delPress(ActionEvent actionEvent) {
-        try {
-            Appointment selected = (Appointment) appointmentsTable.getSelectionModel().getSelectedItem();
-
-            //get info for success message
-            int idDel = selected.getAppId();
-            String typeDel = selected.getType();
-            String message = "The appointment with ID: " + idDel + " and TYPE: '" +typeDel + "' was successfully deleted.";
-
-            //Attempt to delete
-            Connection conn = DBConnection.getConnection();
-            String query = "Delete from appointments WHERE appointment_id = " + idDel;
-
+        if (appIdField.getText().isEmpty()) {
             try {
-                PreparedStatement statement = conn.prepareStatement(query);
-                statement.executeUpdate();
-            } catch (SQLException throwables) {
-                throwables.printStackTrace();
+                Appointment selected = (Appointment) appointmentsTable.getSelectionModel().getSelectedItem();
+
+                //get info for success message
+                int idDel = selected.getAppId();
+                String typeDel = selected.getType();
+                String message = "The appointment with ID: " + idDel + " and TYPE: '" + typeDel + "' was successfully deleted.";
+
+                //Attempt to delete
+                Connection conn = DBConnection.getConnection();
+                String query = "Delete from appointments WHERE appointment_id = " + idDel;
+
+                try {
+                    PreparedStatement statement = conn.prepareStatement(query);
+                    statement.executeUpdate();
+                } catch (SQLException throwables) {
+                    throwables.printStackTrace();
+                }
+
+                //Update table with new values depending on filter
+                if (allRad.isSelected()) {
+                    aList.clearAppointmentList();
+                    aList.updateAppointments();
+                    appointmentsTable.setItems(aList.getAppointmentList());
+                }
+                if (thisWeekRad.isSelected()) {
+                    filterList.clearAppointmentList();
+                    filterList.filterWeek(dateFilter.getValue());
+                    appointmentsTable.setItems(filterList.getAppointmentList());
+                }
+                if(thisMonthRad.isSelected()) {
+                    filterList.clearAppointmentList();
+                    filterList.filterMonth(dateFilter.getValue());
+                    appointmentsTable.setItems(filterList.getAppointmentList());
+                }
+
+                //success info message
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Success!");
+                alert.setContentText(message);
+                alert.showAndWait();
+
+            } catch (NullPointerException e) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("No selection");
+                alert.setContentText("Please select Appointment to delete.");
+                alert.showAndWait();
             }
-
-            //repopulate Table
-            aList.clearAppointmentList();
-            aList.updateAppointments();
-            appointmentsTable.setItems(aList.getAppointmentList());
-            clearFields();
-
-            //success info message
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Success!");
-            alert.setContentText(message);
-            alert.showAndWait();
-
-        } catch (NullPointerException e) {
+        }
+        else {
             Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("No selection");
-            alert.setContentText("Please select Appointment to delete.");
+            alert.setTitle("Currently Updating");
+            alert.setContentText("Please clear or save currently updating customer before deleting a customer");
             alert.showAndWait();
         }
     }
@@ -717,11 +786,25 @@ public class AppointmentScreen implements Initializable {
             clearFields();
         }
         else {
-            AppointmentList.addAppointment(updatingApp);
+            aList.addAppointment(updatingApp);
             clearFields();
-            aList.clearAppointmentList();
-            aList.updateAppointments();
-            appointmentsTable.setItems(aList.getAppointmentList());
+
+            //Update table with new values depending on filter
+            if (allRad.isSelected()) {
+                aList.clearAppointmentList();
+                aList.updateAppointments();
+                appointmentsTable.setItems(aList.getAppointmentList());
+            }
+            if (thisWeekRad.isSelected()) {
+                filterList.clearAppointmentList();
+                filterList.filterWeek(dateFilter.getValue());
+                appointmentsTable.setItems(filterList.getAppointmentList());
+            }
+            if(thisMonthRad.isSelected()) {
+                filterList.clearAppointmentList();
+                filterList.filterMonth(dateFilter.getValue());
+                appointmentsTable.setItems(filterList.getAppointmentList());
+            }
         }
     }
 
@@ -741,11 +824,13 @@ public class AppointmentScreen implements Initializable {
 
     /**
      * Method that makes sure selected date is not in the past
+     * sets prompt text to selected date
      * @param actionEvent
      */
     public void dateBoxSelect(ActionEvent actionEvent) {
         if (boxListening) {
             LocalDate selected = dateBox.getValue();
+            dateBox.setPromptText(String.valueOf(dateBox.getValue()));
             try {
                 if (selected.compareTo(LocalDate.now()) < 0) {
                     dateBox.setValue(null);
@@ -755,6 +840,59 @@ public class AppointmentScreen implements Initializable {
                     alert.showAndWait();
                 }
             } catch (NullPointerException e) {}
+        }
+    }
+
+    /**
+     * Populate table with all available appointments
+     * @param actionEvent
+     */
+    public void allRadPick(ActionEvent actionEvent) {
+        aList.clearAppointmentList();
+        aList.updateAppointments();
+        appointmentsTable.setItems(aList.getAppointmentList());
+    }
+
+    /**
+     * Populate table with appointments filtered by week start selected
+     * @param actionEvent
+     */
+    public void weekRadPick(ActionEvent actionEvent) {
+        filterList.clearAppointmentList();
+        filterList.filterWeek(dateFilter.getValue());
+        appointmentsTable.setItems(filterList.getAppointmentList());
+    }
+
+    /**
+     * Populate table with appointments filtered by month start selected
+     * @param actionEvent
+     */
+    public void monthRadPick(ActionEvent actionEvent) {
+        filterList.clearAppointmentList();
+        filterList.filterMonth(dateFilter.getValue());
+        appointmentsTable.setItems(filterList.getAppointmentList());
+    }
+
+    /**
+     * enables filter radials if date was selected
+     * sets prompt text to selected date
+     * @param actionEvent
+     */
+    public void dateFilterToggle(ActionEvent actionEvent) {
+        if (dateFilter.getValue() != null);
+        thisWeekRad.setDisable(false);
+        thisMonthRad.setDisable(false);
+        dateFilter.setPromptText(String.valueOf(dateFilter.getValue()));
+
+        if (thisMonthRad.isSelected()) {
+            filterList.clearAppointmentList();
+            filterList.filterMonth(dateFilter.getValue());
+            appointmentsTable.setItems(filterList.getAppointmentList());
+        }
+        if (thisWeekRad.isSelected()) {
+            filterList.clearAppointmentList();
+            filterList.filterWeek(dateFilter.getValue());
+            appointmentsTable.setItems(filterList.getAppointmentList());
         }
     }
 }

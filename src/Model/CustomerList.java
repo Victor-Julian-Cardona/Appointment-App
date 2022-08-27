@@ -1,12 +1,14 @@
-package Utility;
+package Model;
 
-import Model.Customer;
 import database.DBConnection;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-
 import java.sql.*;
 
+/**
+ * CustomerList which holds methods list of customers
+ * includes methods to populate, and modify the list
+ */
 public class CustomerList {
 
     /**

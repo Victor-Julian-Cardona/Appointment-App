@@ -1,7 +1,9 @@
 package Model;
-
 import java.sql.*;
 
+/**
+ * Customer class which holds all information for given customer
+ */
 public class Customer {
 
     private final int cusId;
