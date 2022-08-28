@@ -124,10 +124,11 @@ public class login implements Initializable {
                 results.forEach(t -> startList.add(t.getStart().toLocalDateTime()));
                 results.forEach(t -> idList.add(t.getAppId()));
 
-                String message = "There is an appointment in the next 15 minutes.";
-                message = message + " An appointment today: " + startList.get(0).toLocalDate() + " that starts at " + startList.get(0).toLocalTime() + ". With the following ID: " + idList.get(0) + ".";
-
                 if (resultsCount > 0) {
+
+                    String message = "There is an appointment in the next 15 minutes.";
+                    message = message + " An appointment today: " + startList.get(0).toLocalDate() + " that starts at " + startList.get(0).toLocalTime() + ". With the following ID: " + idList.get(0) + ".";
+
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
                     alert.setTitle("Appointments soon!");
                     alert.setContentText(message);
@@ -139,9 +140,6 @@ public class login implements Initializable {
                     alert.setContentText("There are no appointments within the next 15 minutes");
                     alert.showAndWait();
                 }
-
-
-
             }
             else {
                 Alert alert = new Alert(Alert.AlertType.ERROR);

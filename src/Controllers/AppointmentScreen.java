@@ -72,7 +72,7 @@ public class AppointmentScreen implements Initializable {
     private Timestamp startDateTime, endDateTime;
 
     /**
-     * Declare boolean to check if callendar and comboBoxes are listening
+     * Declare boolean to check if calendar and comboBoxes are listening
      */
     private boolean boxListening = true;
 
@@ -97,7 +97,7 @@ public class AppointmentScreen implements Initializable {
     private AppointmentList filterList = new AppointmentList();
 
     /**
-     * Declare observable list of all customerIds
+     * Declare observable list of all customers
      */
     private ObservableList<String> customerList = FXCollections.observableArrayList();
 
@@ -117,7 +117,7 @@ public class AppointmentScreen implements Initializable {
     public Supplier<Timestamp> getCurrTime = () -> Timestamp.valueOf(LocalDateTime.now());
 
     /**
-     * Method to get observable list of buisness hours
+     * Method to get observable list of business hours
      */
     public ObservableList getHourList() {
         ObservableList<String> hourList = FXCollections.observableArrayList();

@@ -19,6 +19,7 @@ public class mainScreen implements Initializable {
     public Button custButton;
     public Button exitButton;
     public Button appButton;
+    public Button infoButton;
 
     /**
      * Initializer for mainScreen class
@@ -53,12 +54,25 @@ public class mainScreen implements Initializable {
     }
 
     /**
-     * Method to change from the mainScren to the AppointmentScreen
+     * Method to change from the mainScreen to the AppointmentScreen
      * @param actionEvent
      * @throws IOException
      */
     public void appPress(ActionEvent actionEvent) throws IOException {
         Parent mainScreen = FXMLLoader.load(getClass().getResource(("../view/AppointmentScreen.fxml")));
+        Scene scene = new Scene(mainScreen);
+        Stage window = (Stage) ((Button) actionEvent.getSource()).getScene().getWindow();
+        window.setScene(scene);
+        window.show();
+    }
+
+    /**
+     * Gives functionality to information button which changes scene to the InformationScreen view
+     * @param actionEvent
+     * @throws IOException
+     */
+    public void infoButtonPress(ActionEvent actionEvent) throws IOException {
+        Parent mainScreen = FXMLLoader.load(getClass().getResource(("../view/InformationScreen.fxml")));
         Scene scene = new Scene(mainScreen);
         Stage window = (Stage) ((Button) actionEvent.getSource()).getScene().getWindow();
         window.setScene(scene);
