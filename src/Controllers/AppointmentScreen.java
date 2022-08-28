@@ -29,6 +29,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+/**
+ * Appointment screen class which controls the AppointmentScreen view
+ */
 public class AppointmentScreen implements Initializable {
 
     public TableColumn appIdCol;
@@ -274,6 +277,7 @@ public class AppointmentScreen implements Initializable {
     /**
      * Method that checks for conflicts with the given Timestamps for start and end times of an Appointment
      * returns true if there is a conflict and false if not
+     * LAMBDA Predicate used for stream filter
      * @param start
      * @param end
      * @return conflict
@@ -343,6 +347,7 @@ public class AppointmentScreen implements Initializable {
 
     /**
      * Method to initialize screen, populates all tables and boxes
+     * LAMBDA Supplier getUser is used to fetch user from login.java without having to declare a method in that class
      * @param url
      * @param resourceBundle
      */
@@ -397,6 +402,8 @@ public class AppointmentScreen implements Initializable {
 
     /**
      * Method that gives functionality to the add Appointment button which adds appointment with entered information into database
+     * LAMBDA Supplier getCurrTime used for convenience  when Timestamp of current time is needed
+     * LAMBDA Supplier getUser is used to fetch user from login.java without having to declare a method in that class
      * @param actionEvent
      * @throws SQLException
      */
@@ -513,6 +520,7 @@ public class AppointmentScreen implements Initializable {
     /**
      * gives functionality to update appointment button
      * populates all fields with appointment information
+     * LAMBDA Supplier getCurrTime used for convenience  when Timestamp of current time is needed
      * @param actionEvent
      */
     public void upPress(ActionEvent actionEvent) {
@@ -605,6 +613,8 @@ public class AppointmentScreen implements Initializable {
     /**
      * Functionality for save button that updates selected appointment if all fields and boxes are populated adequately
      * Displays error messages if not
+     * LAMBDA Supplier getCurrTime used for convenience  when Timestamp of current time is needed
+     * LAMBDA Supplier getUser is used to fetch user from login.java without having to declare a method in that class
      * @param actionEvent
      */
     public void savePress(ActionEvent actionEvent) {

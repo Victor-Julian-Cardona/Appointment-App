@@ -1,5 +1,6 @@
 package Controllers;
 
+import Model.Appointment;
 import Model.AppointmentList;
 import Utility.Converters;
 import database.DBConnection;
@@ -20,7 +21,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ResourceBundle;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -41,10 +43,8 @@ public class InformationScreen implements Initializable {
     public TableColumn custIdCol;
     public ComboBox typeCombo;
     public ComboBox monthCombo;
-    public TextField yearSelectField;
     public TextField typeField;
     public TextField monthField;
-    public TextField yearField;
     public TableColumn contIdCol;
 
     /**
@@ -63,9 +63,19 @@ public class InformationScreen implements Initializable {
     private ObservableList<String> typeList = FXCollections.observableArrayList();
 
     /**
-     * Declare object AppointmentList, which holds a list of all appointments
+     * Declare object aList, which holds a list of all appointments to be shown in table
      */
     private AppointmentList aList = new AppointmentList();
+
+    /**
+     * Declare object bList, to be used for counting purposes
+     */
+    private AppointmentList bList = new AppointmentList();
+
+    /**
+     * Declare observable list monthList to hold all months
+     */
+    private ObservableList<Integer> monthList = FXCollections.observableArrayList();
 
     /**
      * Declare boolean that checks if comboBoxes are listening
@@ -104,22 +114,44 @@ public class InformationScreen implements Initializable {
         contBox.setItems(contactList);
     }
 
+    /**
+     * Method to set typeComboBox with observable list of all available appointment types
+     * Uses stream.filter to remove duplicates
+     * LAMBDA: Predicate used for stream filter
+     * @throws SQLException
+     */
     public void setTypeList() throws SQLException {
+        //populate contactList with all types
         String query = "SELECT type FROM appointments ORDER BY type";;
         Connection conn = DBConnection.getConnection();
         PreparedStatement statement = conn.prepareStatement(query);
         ResultSet rs = statement.executeQuery();
         while (rs.next()) {
             String type = rs.getString("type");
-            contactList.add(type);
+            typeList.add(type);
         }
-        /*
-        Stream<String> myStream = contactList
-        return list.stream()
-                .filter(n -> !items.add(n)) // Set.add() returns false if the element was already in the set.
-                .collect(Collectors.toSet());
+        //populate filteredTypeList with all types without duplicates
+        Set<String> filteredTypeList= new HashSet<String>();
+        Stream<String> myStream = typeList.stream();
+        List newTypeList = myStream.filter(t -> filteredTypeList.add(t)).collect(Collectors.toList());
 
-         */
+        //populate contactList with all types without duplicates
+        typeList.clear();
+        for (int i = 0; i < newTypeList.size(); i++) {
+            typeList.add(String.valueOf(newTypeList.get(i)));
+        }
+        //populate combo with contactList without duplicates
+        typeCombo.setItems(typeList);
+    }
+
+    /**
+     * Method to set month comboBox with all months
+     */
+    public void setMonthList() {
+        for (int i = 1; i <= 12; i++) {
+            monthList.add(i);
+        }
+        monthCombo.setItems(monthList);
     }
 
     /**
@@ -129,19 +161,18 @@ public class InformationScreen implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        //set customer comboBox
+
+        //set customer comboBox, type comboBox, contact comboBox
         try {
             setCustomerList();
+            setContactList();
+            setTypeList();
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }
 
-        //set contact comboBox
-        try {
-            setContactList();
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
-        }
+        //set month comboBox
+        setMonthList();
     }
 
     /**
@@ -167,6 +198,10 @@ public class InformationScreen implements Initializable {
             endCol.setCellValueFactory(new PropertyValueFactory<>("end"));
             custIdCol.setCellValueFactory(new PropertyValueFactory<>("custId"));
             contIdCol.setCellValueFactory(new PropertyValueFactory<>("contId"));
+
+            boxListening = false;
+            custBox.getSelectionModel().clearSelection();
+            boxListening = true;
         }
     }
 
@@ -192,7 +227,10 @@ public class InformationScreen implements Initializable {
             startCol.setCellValueFactory(new PropertyValueFactory<>("start"));
             endCol.setCellValueFactory(new PropertyValueFactory<>("end"));
             custIdCol.setCellValueFactory(new PropertyValueFactory<>("custId"));
-            contIdCol.setCellValueFactory(new PropertyValueFactory<>("contId"));
+
+            boxListening = false;
+            contBox.getSelectionModel().clearSelection();
+            boxListening = true;
         }
     }
 
@@ -209,12 +247,37 @@ public class InformationScreen implements Initializable {
         window.show();
     }
 
-    public void typeComboSelect(ActionEvent actionEvent) {
+    /**
+     * Method that gets selection from type comboBox and populates the type Field with the amount of appointments of that type
+     * @param actionEvent
+     * @throws SQLException
+     */
+    public void typeComboSelect(ActionEvent actionEvent) throws SQLException {
+
+        int typeCount = 0;
+        String appType = String.valueOf(typeCombo.getSelectionModel().getSelectedItem());
+
+        String query = "SELECT appointment_id FROM appointments WHERE type = '" + appType + "'";;
+        Connection conn = DBConnection.getConnection();
+        PreparedStatement statement = conn.prepareStatement(query);
+        ResultSet rs = statement.executeQuery();
+        while (rs.next()) {
+            typeCount++;
+        }
+        typeField.setText(String.valueOf(typeCount));
     }
 
+    /**
+     * Gets the amount of appointments in the selected month and populates month field with that value
+     * LAMBDA: predicate used for stream filter
+     * @param actionEvent
+     */
     public void monthComboSelect(ActionEvent actionEvent) {
-    }
-
-    public void yearSelectFieldFilled(ActionEvent actionEvent) {
+        bList.clearAppointmentList();
+        bList.updateAppointments();
+        int monthType = Integer.parseInt(String.valueOf(monthCombo.getSelectionModel().getSelectedItem()));
+        Stream<Appointment> bListStream = bList.getAppointmentList().stream();
+        long monthCount = bListStream.filter(m -> (m.getStart().toLocalDateTime().getMonth().getValue() == monthType)).count();
+        monthField.setText(String.valueOf(monthCount));
     }
 }

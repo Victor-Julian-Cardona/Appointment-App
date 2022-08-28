@@ -7,7 +7,7 @@ import java.sql.SQLException;
 
 
 /**
- * Object that includes all methods relating to the connection to the database to be used in the program
+ * Class that includes all methods relating to the connection to the database to be used in the program
  */
 public class DBConnection {
 

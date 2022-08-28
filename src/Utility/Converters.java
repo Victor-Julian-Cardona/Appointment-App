@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.util.TimeZone;
 
 /**
- * class
+ * Class that contains utility methods, mostly to convert timestamps and to search for names and ids
  */
 public class Converters {
 

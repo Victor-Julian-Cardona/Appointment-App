@@ -2,7 +2,7 @@ package Controllers;
 
 import Model.Appointment;
 import Model.AppointmentList;
-import com.mysql.cj.x.protobuf.MysqlxPrepare;
+import Utility.Converters;
 import database.DBConnection;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
@@ -12,6 +12,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
@@ -60,6 +61,28 @@ public class login implements Initializable {
      */
     public Supplier<Timestamp> getCurrTime = () -> Timestamp.valueOf(LocalDateTime.now());
 
+    /**
+     * Method that writes log in attempt time and success/failure status into a .text file.
+     * LAMBDA predicate used for stream filter
+     * LAMBDA Supplier getCurrTime used for convenience when Timestamp of local time is needed
+     * @param success
+     * @throws IOException
+     */
+    public void logWrite(boolean success) throws IOException {
+        String loginResult;
+        if (success) {
+            loginResult = " UTC. The attempt was successful.";
+        }
+        else {
+            loginResult = " UTC. The attempt was not successful.";
+        }
+        FileWriter logWriter = new FileWriter("login_activity.txt", true);
+        String log = "Log in attempt at: " + Converters.localToUTC(getCurrTime.get()) + loginResult;
+        logWriter.append(log);
+        logWriter.append(System.getProperty("line.separator"));
+        logWriter.close();
+    }
+
     /** Initializes login screen
      * Sets time zone label to user time zone
      * Changes all text in log in form to french if locale language is french
@@ -90,7 +113,7 @@ public class login implements Initializable {
      * @param actionEvent
      * @throws SQLException
      */
-    public void loginPress(javafx.event.ActionEvent actionEvent) throws SQLException {
+    public void loginPress(javafx.event.ActionEvent actionEvent) throws SQLException, IOException {
 
         String userName = namefield.getText();
         String passInput = passfield.getText();
@@ -104,12 +127,18 @@ public class login implements Initializable {
             String userPass = rs.getString("Password");
 
             if (passInput.equals(userPass)) {
+                //goes to next screen
                 Parent mainScreen = FXMLLoader.load(getClass().getResource(("../view/mainScreen.fxml")));
                 Scene scene = new Scene(mainScreen);
                 Stage window = (Stage) ((Button) actionEvent.getSource()).getScene().getWindow();
                 window.setScene(scene);
                 window.show();
+
+                //saves user
                 user = userName;
+
+                //Log the attempt
+                logWrite(true);
 
                 // Checks if there are appointments within 15 minutes of successful login
                 aList.updateAppointments();
@@ -152,6 +181,9 @@ public class login implements Initializable {
                     alert.setContentText("Please enter correct Password.");
                 }
                 alert.showAndWait();
+
+                //logs attempt
+                logWrite(false);
             }
         } catch (SQLException | IOException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -164,6 +196,9 @@ public class login implements Initializable {
                 alert.setContentText("Please enter valid User Name.");
             }
             alert.showAndWait();
+
+            //logs attempt
+            logWrite(false);
         }
     }
 

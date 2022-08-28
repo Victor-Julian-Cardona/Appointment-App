@@ -22,6 +22,9 @@ import java.time.LocalDateTime;
 import java.util.ResourceBundle;
 import java.util.function.Supplier;
 
+/**
+ * customerScreen class which controls the customer Screen view
+ */
 public class customerScreen implements Initializable {
     public TableView cusTable;
     public TableColumn idCol;
@@ -96,7 +99,7 @@ public class customerScreen implements Initializable {
     /**
      * Lambda supplier expression to get current date andtime
      */
-    public Supplier<Timestamp> getTime = () -> Timestamp.valueOf(LocalDateTime.now());
+    public Supplier<Timestamp> getCurrTime = () -> Timestamp.valueOf(LocalDateTime.now());
 
     /**
      * Method to populate country combo box
@@ -190,8 +193,10 @@ public class customerScreen implements Initializable {
 
     /**
      * adds customer to database
-     * prints errors if fields and comboboxes arent populated and selected
+     * prints errors if fields and comboBoxes arent populated and selected
      * repopulates table
+     * LAMBDA Supplier getCurrTime used for convenience when timestamp of current local time is needed
+     * LAMBDA Supplier getUser is used to fetch user from login.java without having to declare a method in that class
      * @param actionEvent
      */
     public void addPress(ActionEvent actionEvent) {
@@ -224,9 +229,9 @@ public class customerScreen implements Initializable {
             String addressInput = addressField.getText();
             String postalInput = postalField.getText();
             String phoneInput = phoneFIeld.getText();
-            Timestamp todayTime = getTime.get();
+            Timestamp todayTime = getCurrTime.get();
             String createBy = getUser.get();
-            Timestamp updateTime = getTime.get();
+            Timestamp updateTime = getCurrTime.get();
             String updateBy = getUser.get();
 
             //Insert data into table
@@ -319,6 +324,8 @@ public class customerScreen implements Initializable {
 
     /**
      * Functionality for save button that updates customer with updated information from fields
+     * LAMBDA Supplier getCurrTime used for convenience  when Timestamp of current time is needed
+     * LAMBDA Supplier getUser is used to fetch user from login.java without having to declare a method in that class
      * @param actionEvent
      */
     public void savePress(ActionEvent actionEvent) {
@@ -342,7 +349,7 @@ public class customerScreen implements Initializable {
             String addressInput = addressField.getText();
             String postalInput = postalField.getText();
             String phoneInput = phoneFIeld.getText();
-            Timestamp updateTime = getTime.get();
+            Timestamp updateTime = getCurrTime.get();
             String updateBy = getUser.get();
 
             //Insert data into table
