@@ -65,19 +65,28 @@ public class login implements Initializable {
      * Method that writes log in attempt time and success/failure status into a .text file.
      * LAMBDA predicate used for stream filter
      * LAMBDA Supplier getCurrTime used for convenience when Timestamp of local time is needed
-     * @param success
+     * @param passSuccess
+     * @param userSuccess
+     * @param userInput
      * @throws IOException
      */
-    public void logWrite(boolean success) throws IOException {
-        String loginResult;
-        if (success) {
-            loginResult = " UTC. The attempt was successful.";
+    public void logWrite(boolean passSuccess, boolean userSuccess, String userInput) throws IOException {
+        String passLoginResult;
+        String userLoginResult;
+        if (passSuccess) {
+            passLoginResult = " UTC. The attempt was successful.";
         }
         else {
-            loginResult = " UTC. The attempt was not successful.";
+            passLoginResult = " UTC. The attempt was not successful.";
+        }
+        if (userSuccess) {
+            userLoginResult = "The user : '" + user + "' attempted to log in.";
+        }
+        else {
+            userLoginResult = "The unknown user : '" + userInput + "' attempted to log in.";
         }
         FileWriter logWriter = new FileWriter("login_activity.txt", true);
-        String log = "Log in attempt at: " + Converters.localToUTC(getCurrTime.get()) + loginResult;
+        String log = userLoginResult + " The log in attempt was at: " + Converters.localToUTC(getCurrTime.get()) + passLoginResult;
         logWriter.append(log);
         logWriter.append(System.getProperty("line.separator"));
         logWriter.close();
@@ -138,7 +147,7 @@ public class login implements Initializable {
                 user = userName;
 
                 //Log the attempt
-                logWrite(true);
+                logWrite(true, true, userName);
 
                 // Checks if there are appointments within 15 minutes of successful login
                 aList.updateAppointments();
@@ -183,7 +192,8 @@ public class login implements Initializable {
                 alert.showAndWait();
 
                 //logs attempt
-                logWrite(false);
+                user = userName;
+                logWrite(false, true, userName);
             }
         } catch (SQLException | IOException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -198,7 +208,7 @@ public class login implements Initializable {
             alert.showAndWait();
 
             //logs attempt
-            logWrite(false);
+            logWrite(false, false, userName);
         }
     }
 
