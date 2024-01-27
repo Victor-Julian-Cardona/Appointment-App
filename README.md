@@ -1,7 +1,6 @@
 Title of application: Appointment Management Program
 Purpose of application: Allows user to manage appointments for an organization by creating, reading, updating and deleting appointments and the customers the appointments are for. Also displays useful information such as appointments within the next 15 minutes, log in logs, customer and contact schedules and ammount of schedules per type or month.
 Author: Victor Cardona
-Contact information:  Phone: (787)-450-4223   Email: vcardo3@wgu.edu
 Application Version: 1.0 (first submission)
 Date: 8/28/2022
 IDE: IntelliJ IDEA Community Edition 2021.1.3 x64
